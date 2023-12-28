@@ -68,7 +68,8 @@ class TestsPage: # todo output to raw
         if 'selection' not in st.session_state:
             st.session_state["selection"]: [(str, str)] = []
         if 'table_selected_trackers' not in st.session_state:
-            st.session_state['table_selected_trackers'] = {}
+            indexes = st.session_state['results'][['tracker', 'dataset']].value_counts().index.rename(['Tracker', 'Dataset'])
+            st.session_state['table_selected_trackers'] = pandas.DataFrame([False]*indexes.size,index=indexes,columns=['Selected'])
         if 'trackers' not in st.session_state:
             st.session_state.trackers = [_tracker() for _tracker in get_concrete_classes(tracker.Tracker)]
 
@@ -87,7 +88,7 @@ class TestsPage: # todo output to raw
 
             if self.submitted:
                 st.session_state.selection.append((tracker, selected_dataset))
-                st.session_state.table_selected_trackers[tracker] = True
+                st.session_state.table_selected_trackers.loc[tracker, selected_dataset] = True
 
     def main_page(self) -> None:
         self.current_frame_image = st.empty()
@@ -111,26 +112,31 @@ class TestsPage: # todo output to raw
 
     def draw_scores(self):
         selected = st.session_state.table_selected_trackers
-        selected = list(filter(lambda key: selected[key], selected))
+        selected = selected.loc[selected['Selected'] == True]
+        if selected.empty:
+            return
         ts = self.get_threshold_success()
-        ts = ts[ts.Tracker.isin(selected)]
+        ts = ts.set_index(['Tracker', 'Dataset'])
+        ts = ts.loc[selected.index]
         ts = ts.reset_index()
+        ts['TrackerDataset'] = ts[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
         if len(ts) > 0:
-            self.iou_quality_chart.line_chart(ts, x='Threshold', y='Success', color='Tracker', height=300)
+            self.iou_quality_chart.line_chart(ts, x='Threshold', y='Success', color='TrackerDataset', height=300)
 
         ra = self.get_robustness_accuracy()
-        ra = ra[ra.Tracker.isin(selected)]
+        ra = ra.set_index(['Tracker', 'Dataset'])
+        ra = ra.loc[selected.index]
         ra = ra.reset_index()
+        ra['TrackerDataset'] = ra[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
         if len(ra) > 0:
-            self.iou_ar_chart.scatter_chart(ra, x='Robustness', y='Accuracy', color='Tracker', height=300)
+            self.iou_ar_chart.scatter_chart(ra, x='Robustness', y='Accuracy', color='TrackerDataset', height=300)
 
-    def on_table_change(self, index: pandas.Index): # fixme something wrong with selecting
+    def on_table_change(self, foo): # fixme something wrong with selecting
         if 'show_trackers' in st.session_state:
             edited = st.session_state.show_trackers['edited_rows']
-            selected = st.session_state.table_selected_trackers
 
             for i in edited:
-                selected[index[i]] = edited[i]['selected']
+                st.session_state.table_selected_trackers.loc[*foo.iloc[i].tolist()] = edited[i]['Selected']
 
             self.draw_scores()
 
@@ -142,23 +148,19 @@ class TestsPage: # todo output to raw
             return
 
         # todo performance
-        success = ts.groupby(['Tracker']) \
-            .apply(lambda x: x['Success'].tolist())
-        auc = ts.groupby(['Tracker']) \
-            .apply(lambda x: numpy.trapz(y=x['Success'].tolist(), x=x['Threshold'].tolist()))
-        ra = ra.set_index('Tracker') # fixme crash na docelowym zbiorze i medianflow
+        success = ts.groupby(['Tracker', 'Dataset']).apply(lambda x: x['Success'].tolist())
+        auc = ts.groupby(['Tracker', 'Dataset']).apply(lambda x: numpy.trapz(y=x['Success'].tolist(), x=x['Threshold'].tolist()))
+        ra = ra.set_index(['Tracker', 'Dataset'])
+
         df = pandas.concat(
-            [
-                    ra,
-                    pandas.Series(data=list(st.session_state.table_selected_trackers.values()), index=list(st.session_state.table_selected_trackers.keys())),
-                    auc,
-                    success
-                ], axis=1) \
-                .rename(columns={0: 'selected', 1: 'auc', 2: 'success'})
+            [ra, success, auc, st.session_state.table_selected_trackers],
+            axis=1,
+        ).rename(columns={0: 'success', 1: 'auc'}).reset_index()
 
         self.result_table = st.data_editor(
             df,
             column_config={
+                "tracker": "Tracker",
                 "dataset": "Dataset",
                 "robustness": "Robustness",
                 "accuracy": "Accuracy",
@@ -172,11 +174,12 @@ class TestsPage: # todo output to raw
                     default=True,
                 ),
             },
-            disabled=["dataset", "robustness", "accuracy", "auc", "success"],
-            on_change=self.on_table_change(df.index),
+            disabled=['tracker',"dataset", "robustness", "accuracy", "auc", "success"],
+            on_change=self.on_table_change(df[['Tracker', 'Dataset']]),
             use_container_width=True,
             key='show_trackers',
-            column_order=["Dataset", "Robustness", "Accuracy", "auc", "success", "selected"]
+            column_order=["Tracker", "Dataset", "Robustness", "Accuracy", "auc", "success", "Selected"],
+            hide_index=True
         )
 
     @staticmethod
