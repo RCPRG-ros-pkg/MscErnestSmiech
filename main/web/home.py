@@ -17,7 +17,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 import main.tracker as tracker
 
 
-def get_concrete_classes(cls): # todo
+def get_concrete_classes(cls):
     for subclass in cls.__subclasses__():
         yield from get_concrete_classes(subclass)
         if not inspect.isabstract(subclass):
@@ -39,6 +39,7 @@ results_dir = './raw/results'
 results_file = f'{results_dir}/results.csv'
 
 
+# fixme after first test with empty table, table has extra row
 class TestsPage: # todo output to raw
     submitted = False
     sequence = ""
