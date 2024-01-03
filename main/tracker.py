@@ -32,19 +32,19 @@ class Tracker(ABC):
 
     def test(
             self,
-            _dataset_dir: str,
-            _show_tracking=False,
-            _iou_threshold_for_correction=.0,
-            _iou_threshold_for_recording=.0,
+            dataset_dir: str,
+            show_tracking=False,
+            iou_threshold_for_correction=.0,
+            iou_threshold_for_recording=.0,
             listener: Callable[[int, int], None] = None,
             frame_listener: Callable[[numpy.ndarray], None] = None
     ) -> tuple[numpy.ndarray, DataFrame]:
         return test_tracker(
             self,
-            _dataset_dir,
-            _show_tracking,
-            _iou_threshold_for_correction,
-            _iou_threshold_for_recording,
+            dataset_dir,
+            show_tracking,
+            iou_threshold_for_correction,
+            iou_threshold_for_recording,
             listener,
             frame_listener
         )

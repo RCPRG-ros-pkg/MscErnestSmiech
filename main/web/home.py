@@ -57,7 +57,7 @@ class TestsPage: # todo output to raw
             try:
                 os.makedirs(results_dir)
                 st.session_state.results = pandas.DataFrame(
-                    columns=['tracker', 'dataset', 'supervised', 'sequence', 'ious', 'stt-iou'],
+                    columns=['tracker', 'dataset', 'sequence', 'ious', 'stt-iou'],
                     dtype=object
                 )
                 st.session_state.results.to_csv(results_file, mode='x', index=False)
@@ -67,9 +67,9 @@ class TestsPage: # todo output to raw
                 # todo performance
                 st.session_state.results.ious = st.session_state.results.ious.apply(json.loads).apply(numpy.array)
         if 'selection' not in st.session_state:
-            st.session_state["selection"]: [(str, str, bool)] = []
+            st.session_state["selection"]: [(str, str)] = []
         if 'table_selected_trackers' not in st.session_state:
-            indexes = st.session_state.results[['tracker', 'dataset', 'supervised']].value_counts().index.rename(['Tracker', 'Dataset', "Supervised"])
+            indexes = st.session_state['results'][['tracker', 'dataset']].value_counts().index.rename(['Tracker', 'Dataset'])
             st.session_state['table_selected_trackers'] = pandas.DataFrame([False]*indexes.size,index=indexes,columns=['Selected'])
         if 'trackers' not in st.session_state:
             st.session_state.trackers = [_tracker() for _tracker in get_concrete_classes(tracker.Tracker)]
@@ -84,13 +84,12 @@ class TestsPage: # todo output to raw
         with st.sidebar.form("Options"):
             tracker = st.selectbox('Trackers', [tracker.name for tracker in st.session_state.trackers])
             selected_dataset = st.selectbox("Datasets", datasets.keys())
-            supervised = st.checkbox('Supervised')
 
             self.submitted = st.form_submit_button("Submit", use_container_width=True, type="primary")
 
             if self.submitted:
-                st.session_state.selection.append((tracker, selected_dataset, supervised))
-                st.session_state.table_selected_trackers.loc[tracker, selected_dataset, supervised] = True
+                st.session_state.selection.append((tracker, selected_dataset))
+                st.session_state.table_selected_trackers.loc[tracker, selected_dataset] = True
 
     def main_page(self) -> None:
         self.current_frame_image = st.empty()
@@ -118,22 +117,20 @@ class TestsPage: # todo output to raw
         if selected.empty:
             return
         ts = self.get_threshold_success()
-        ts = ts.set_index(['Tracker', 'Dataset', 'Supervised'])
+        ts = ts.set_index(['Tracker', 'Dataset'])
         ts = ts.loc[selected.index]
         ts = ts.reset_index()
-        ts['Supervised'] = ts['Supervised'].apply(lambda x: "True" if x else "False")
-        ts['TrackerDatasetSupervised'] = ts[['Tracker', 'Dataset', 'Supervised']].agg(' - '.join, axis=1)
+        ts['TrackerDataset'] = ts[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
         if len(ts) > 0:
-            self.iou_quality_chart.line_chart(ts, x='Threshold', y='Success', color='TrackerDatasetSupervised', height=300)
+            self.iou_quality_chart.line_chart(ts, x='Threshold', y='Success', color='TrackerDataset', height=300)
 
         ra = self.get_robustness_accuracy()
-        ra = ra.set_index(['Tracker', 'Dataset', 'Supervised'])
+        ra = ra.set_index(['Tracker', 'Dataset'])
         ra = ra.loc[selected.index]
         ra = ra.reset_index()
-        ra['Supervised'] = ra['Supervised'].apply(lambda x: "True" if x else "False")
-        ra['TrackerDatasetSupervised'] = ra[['Tracker', 'Dataset', 'Supervised']].agg(' - '.join, axis=1)
+        ra['TrackerDataset'] = ra[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
         if len(ra) > 0:
-            self.iou_ar_chart.scatter_chart(ra, x='Robustness', y='Accuracy', color='TrackerDatasetSupervised', height=300)
+            self.iou_ar_chart.scatter_chart(ra, x='Robustness', y='Accuracy', color='TrackerDataset', height=300)
 
     def on_table_change(self, foo): # fixme something wrong with selecting
         if 'show_trackers' in st.session_state:
@@ -152,9 +149,9 @@ class TestsPage: # todo output to raw
             return
 
         # todo performance
-        success = ts.groupby(['Tracker', 'Dataset', 'Supervised']).apply(lambda x: x['Success'].tolist())
-        auc = ts.groupby(['Tracker', 'Dataset', 'Supervised']).apply(lambda x: numpy.trapz(y=x['Success'].tolist(), x=x['Threshold'].tolist()))
-        ra = ra.set_index(['Tracker', 'Dataset', 'Supervised'])
+        success = ts.groupby(['Tracker', 'Dataset']).apply(lambda x: x['Success'].tolist())
+        auc = ts.groupby(['Tracker', 'Dataset']).apply(lambda x: numpy.trapz(y=x['Success'].tolist(), x=x['Threshold'].tolist()))
+        ra = ra.set_index(['Tracker', 'Dataset'])
 
         df = pandas.concat(
             [ra, success, auc, st.session_state.table_selected_trackers],
@@ -166,11 +163,6 @@ class TestsPage: # todo output to raw
             column_config={
                 "tracker": "Tracker",
                 "dataset": "Dataset",
-                "supervised": st.column_config.CheckboxColumn(
-                    "Supervised",
-                    help="Was tracker supervised during testing",
-                    disabled=True,
-                ),
                 "robustness": "Robustness",
                 "accuracy": "Accuracy",
                 "auc": "AUC",
@@ -183,17 +175,17 @@ class TestsPage: # todo output to raw
                     default=True,
                 ),
             },
-            disabled=['Tracker', "Dataset", "Supervised", "Robustness", "Accuracy", "AUC", "Success"],
-            on_change=self.on_table_change(df[['Tracker', 'Dataset', 'Supervised']]),
+            disabled=['tracker',"dataset", "robustness", "accuracy", "auc", "success"],
+            on_change=self.on_table_change(df[['Tracker', 'Dataset']]),
             use_container_width=True,
             key='show_trackers',
-            column_order=["Tracker", "Dataset", "Supervised", "Robustness", "Accuracy", "auc", "success", "Selected"],
+            column_order=["Tracker", "Dataset", "Robustness", "Accuracy", "auc", "success", "Selected"],
             hide_index=True
         )
 
     @staticmethod
-    def save_results(tracker: str, dataset: str, supervised: bool, sequence: str, ious: numpy.ndarray):
-        df = pandas.DataFrame({'tracker': tracker, 'dataset': dataset, 'supervised': supervised, 'sequence': sequence, 'ious': [ious], 'stt-iou': pandas.NA})
+    def save_results(tracker: str, dataset: str, sequence: str, ious: numpy.ndarray):
+        df = pandas.DataFrame({'tracker': tracker, 'dataset': dataset, 'sequence': sequence, 'ious': [ious], 'stt-iou': pandas.NA})
 
         st.session_state.results = pandas.concat([
             st.session_state.results,
@@ -205,32 +197,32 @@ class TestsPage: # todo output to raw
 
     @staticmethod
     def get_robustness_accuracy() -> pandas.DataFrame:
-        ret_df = pandas.DataFrame(columns=['Tracker', 'Dataset', 'Supervised', 'Robustness', 'Accuracy'])
+        ret_df = pandas.DataFrame(columns=['Tracker', 'Dataset', 'Robustness', 'Accuracy'])
 
-        for (tracker, dataset, supervised), g in st.session_state.results.groupby(['tracker', 'dataset', 'supervised']):
+        for (tracker, dataset), g in st.session_state.results.groupby(['tracker', 'dataset']):
             _failures = 0
             _accuracy = 0
             _weights = 0
-            for tracker, dataset, supervised, _, ious, _ in g.itertuples(name=None, index=False):
+            for tracker, dataset, _, ious, _ in g.itertuples(name=None, index=False):
                 _weights += len(ious)
                 _failures += len(ious[ious == 0])
                 _accuracy += numpy.mean(ious[ious > 0]) * len(ious)
             robustness = math.exp(- (_failures / _weights) * 30)  # todo check
             accuracy = _accuracy / _weights
 
-            ret_df.loc[len(ret_df)] = [tracker, dataset, supervised, robustness, accuracy]
+            ret_df.loc[len(ret_df)] = [tracker, dataset, robustness, accuracy]
 
         return ret_df
 
     @staticmethod
     def get_threshold_success() -> pandas.DataFrame:
-        ret_df = pandas.DataFrame(columns=['Tracker', 'Dataset', 'Supervised', 'Threshold', 'Success'])
+        ret_df = pandas.DataFrame(columns=['Tracker', 'Dataset', 'Threshold', 'Success'])
 
-        for (tracker, dataset, supervised), g in st.session_state.results.groupby(['tracker', 'dataset', 'supervised']):
+        for (tracker, dataset), g in st.session_state.results.groupby(['tracker', 'dataset']):
             axis_x = numpy.linspace(0, 1, 100)
             axis_y = numpy.zeros_like(axis_x)
             object_y = numpy.zeros_like(axis_x)
-            for tracker, dataset, supervised, sequence, ious, stt_iou in g.itertuples(name=None, index=False):
+            for tracker, dataset, sequence, ious, stt_iou in g.itertuples(name=None, index=False):
                 for i, threshold in enumerate(axis_x):
                     if threshold == 1:
                         # Nicer handling of the edge case
@@ -239,7 +231,7 @@ class TestsPage: # todo output to raw
                         object_y[i] += numpy.sum(ious > threshold) / len(ious)
             axis_y += object_y / len(g)
             ret_df = pandas.concat([ret_df, pandas.DataFrame(
-                {'Tracker': [tracker] * len(axis_x), 'Dataset': [dataset] * len(axis_x), 'Supervised': [supervised] * len(axis_x), 'Threshold': axis_x,
+                {'Tracker': [tracker] * len(axis_x), 'Dataset': [dataset] * len(axis_x), 'Threshold': axis_x,
                  'Success': axis_y})])
 
         return ret_df
@@ -261,10 +253,9 @@ class TestsPage: # todo output to raw
                     ious, _ = _tracker.test(
                         f'{datasets[_selection[1]]}/{sequence}',
                         listener=self.display_bar,
-                        frame_listener=self.display_frame,
-                        _iou_threshold_for_correction=0 if _selection[2] else -1 # if supervised
+                        frame_listener=self.display_frame
                     )
-                    self.save_results(_selection[0], _selection[1], _selection[2], sequence, ious)
+                    self.save_results(_selection[0], _selection[1], sequence, ious)
                     self.draw_scores()
             st.session_state.selection = []
             self.all_examples_bar.empty()
