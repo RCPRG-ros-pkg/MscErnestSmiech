@@ -136,11 +136,13 @@ def test_tracker(
         _iou_threshold_for_recording=.0,
         listener: Callable[[int, int], None] = None,
         frame_listener: Callable[[numpy.ndarray], None] = None
-) -> tuple[numpy.ndarray, DataFrame]:
+) -> tuple[numpy.ndarray, DataFrame, list[Polygon|None]]:
     cap, frame = init_video_capture(_dataset_dir)
     ground_truth_polygons = get_ground_truth_positions(f'{_dataset_dir}/groundtruth.txt')
     _tracker.init(ground_truth_polygons[0], frame)
     errors_dir = prepare_dirs(_tracker.name, _dataset_dir.split('/'))
+
+    trajectories: list[Polygon|None] = []
 
     scores = {
         "iou": [],
@@ -158,6 +160,7 @@ def test_tracker(
         # Update tracker
         try:
             ok, bbox = _tracker.eval(frame)
+            trajectories.append(create_polygon(bbox) if ok else None)
         except cv2.error:
             break
 
@@ -200,4 +203,4 @@ def test_tracker(
     cap.release()
     cv2.destroyAllWindows()
 
-    return numpy.asarray(scores['iou']), pandas.DataFrame(data=scores['detection_time'], columns=['detection_time'])
+    return numpy.asarray(scores['iou']), pandas.DataFrame(data=scores['detection_time'], columns=['detection_time']), trajectories

@@ -27,7 +27,11 @@ class Tracker(ABC):
         pass
 
     @abstractmethod
-    def eval(self, frame: numpy.ndarray) -> (bool, tuple[float]):
+    def eval(self, frame: numpy.ndarray) -> (bool, list[float]):
+        """
+        :param frame:
+        :return:
+        """
         pass
 
     def test(
@@ -38,7 +42,7 @@ class Tracker(ABC):
             iou_threshold_for_recording=.0,
             listener: Callable[[int, int], None] = None,
             frame_listener: Callable[[numpy.ndarray], None] = None
-    ) -> tuple[numpy.ndarray, DataFrame]:
+    ) -> tuple[numpy.ndarray, DataFrame, list[Polygon|None]]:
         return test_tracker(
             self,
             dataset_dir,
@@ -66,7 +70,7 @@ class TrackerCV2(Tracker, ABC):
             # Initialize tracker with first frame and bounding box
             self._tracker.init(frame, _minimum_bounding_rectangle)
 
-    def eval(self, frame: numpy.ndarray) -> (bool, tuple[float]):
+    def eval(self, frame: numpy.ndarray) -> (bool, list[float]):
         if self._tracker is None:
             raise Exception("Execute init() first")
         return self._tracker.update(frame)
