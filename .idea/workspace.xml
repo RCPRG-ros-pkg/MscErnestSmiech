@@ -4,18 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="14d56f55-093d-4411-8491-5a542cb611bf" name="Changes" comment="fixed metrics &amp; added NRE, DRE, AD">
-      <change afterPath="$PROJECT_DIR$/main/analysis/accuracy.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/analysis/longterm.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/analysis/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/home.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main/stack/__init__.py" afterDir="false" />
+    <list default="true" id="14d56f55-093d-4411-8491-5a542cb611bf" name="Changes" comment="refactor">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/utils/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/utils/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/web/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/analysis/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/web/home.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/web/pages/1_errors.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/pages/1_errors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/web/pages/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/pages/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/pages/1_errors.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/pages/1_errors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/utils/tracker_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/utils/tracker_test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -298,7 +290,15 @@
       <option name="project" value="LOCAL" />
       <updated>1704739922066</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="refactor">
+      <option name="closed" value="true" />
+      <created>1704741556448</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1704741556448</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -327,7 +327,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init" />
     <MESSAGE value="fixed metrics &amp; added NRE, DRE, AD" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed metrics &amp; added NRE, DRE, AD" />
+    <MESSAGE value="refactor" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

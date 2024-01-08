@@ -19,7 +19,7 @@ def prepare_dirs(_tracker_name: str, _dataset_name: List[str]):
     _now = datetime.now()
     _dt_string = _now.strftime("%Y-%m-%d-%H-%M-%S-%f")
     _raw_index = _dataset_name.index("raw")
-    _errors_dir = f"output/{_tracker_name}/{_dataset_name[_raw_index + 1]}_{_dataset_name[_raw_index + 2]}/{_dataset_name[-1]}/{_dt_string}/errors"
+    _errors_dir = f"raw/errors/{_tracker_name}/{_dataset_name[_raw_index + 2]}/{_dataset_name[-1]}/{_dt_string}"
     try:
         os.makedirs(_errors_dir)
     except FileExistsError:

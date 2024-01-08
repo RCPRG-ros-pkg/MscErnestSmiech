@@ -6,11 +6,7 @@ import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder
 from streamlit.delta_generator import DeltaGenerator
 
-# todo move to file
-datasets = {
-    'VOT Basic Test Stack': './raw/tests/basic/sequences/',
-    'VOT-ST2022 bounding-box challenge': './raw/tests/vot2022stb/sequences/',
-}
+from stack import datasets
 
 
 class ErrorsPage:
@@ -66,7 +62,8 @@ class ErrorsPage:
         )
 
         if return_value['selected_rows']:
-            st.session_state.images = glob.glob(f"{return_value['selected_rows'][0]['path']}/*")
+            d = return_value['selected_rows'][0]
+            st.session_state.images = glob.glob(f"./raw/errors/{d['tracker']}/{datasets[d['dataset']].split('/')[-2]}/{d['sequence']}/{d['date']}/*")
             try:
                 image = st.session_state.images[st.session_state.count]
             except IndexError:
@@ -86,17 +83,8 @@ class ErrorsPage:
     def get_grid_style(df: pandas.DataFrame):
         builder = GridOptionsBuilder.from_dataframe(df)
         builder.configure_selection(selection_mode='single', use_checkbox=False)
-        grid_options = builder.build()
 
-        column_defs = grid_options["columnDefs"]
-        columns_to_hide = ["path"]
-
-        # update the column definitions to hide the specified columns
-        for col in column_defs:
-            if col["headerName"] in columns_to_hide:
-                col["hide"] = True
-
-        return grid_options
+        return builder.build()
 
 
 def get_errors_dataframe() -> pandas.DataFrame:
@@ -105,21 +93,18 @@ def get_errors_dataframe() -> pandas.DataFrame:
         'dataset': [],
         'sequence': [],
         'date': [],
-        'path': []
     }
-    for tracker in get_sub_dirs("output"):
+    for tracker in get_sub_dirs("raw/errors"):
         for dataset in get_sub_dirs(tracker):
             for sequence in get_sub_dirs(dataset):
                 for date in get_sub_dirs(sequence):
-                    _, _tracker, _dataset, _sequence, _date = date.split('/')
+                    _tracker, _dataset, _sequence, _date = date.split('/')[2:]
                     for key in datasets:
-                        print(_dataset, _dataset.replace('_', '/'))
                         if _dataset.replace('_', '/') in datasets[key]:
                             data['tracker'].append(_tracker)
                             data['dataset'].append(key)
                             data['sequence'].append(_sequence)
                             data['date'].append(_date)
-                            data['path'].append(f'{date}/errors')
                             break
 
     return pandas.DataFrame(data)
