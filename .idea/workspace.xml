@@ -4,10 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="14d56f55-093d-4411-8491-5a542cb611bf" name="Changes" comment="refactor">
+    <list default="true" id="14d56f55-093d-4411-8491-5a542cb611bf" name="Changes" comment="moved error frames dir">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/pages/1_errors.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/pages/1_errors.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/utils/tracker_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/utils/tracker_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/home.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/home.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -298,7 +297,15 @@
       <option name="project" value="LOCAL" />
       <updated>1704741556448</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="moved error frames dir">
+      <option name="closed" value="true" />
+      <created>1704745560025</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1704745560025</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -328,7 +335,8 @@
     <MESSAGE value="init" />
     <MESSAGE value="fixed metrics &amp; added NRE, DRE, AD" />
     <MESSAGE value="refactor" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor" />
+    <MESSAGE value="moved error frames dir" />
+    <option name="LAST_COMMIT_MESSAGE" value="moved error frames dir" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

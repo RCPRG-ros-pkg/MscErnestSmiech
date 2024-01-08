@@ -17,7 +17,6 @@ from analysis.utils import create_polygon
 import tracker as tracker
 
 
-# fixme after first test with empty table, table has extra row
 class TestsPage:
     submitted = False
     sequence = ""
@@ -50,7 +49,7 @@ class TestsPage:
             st.session_state["selection"]: [(str, str)] = []
         if 'table_selected_trackers' not in st.session_state:
             indexes = st.session_state['results'][['tracker', 'dataset']].value_counts().index.rename(['Tracker', 'Dataset'])
-            st.session_state['table_selected_trackers'] = pandas.DataFrame([False]*indexes.size,index=indexes,columns=['Selected'])
+            st.session_state.table_selected_trackers = pandas.DataFrame([False]*indexes.size,index=indexes,columns=['Selected'])
         if 'trackers' not in st.session_state:
             st.session_state.trackers = [_tracker() for _tracker in tracker.get_concrete_classes(tracker.Tracker)]
 
@@ -69,7 +68,7 @@ class TestsPage:
 
             if self.submitted:
                 st.session_state.selection.append((tracker, selected_dataset))
-                st.session_state.table_selected_trackers.loc[tracker, selected_dataset] = True
+                st.session_state.table_selected_trackers.loc[(tracker, selected_dataset), :] = True
 
     def main_page(self) -> None:
         self.current_frame_image = st.empty()
