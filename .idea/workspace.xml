@@ -4,11 +4,18 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="14d56f55-093d-4411-8491-5a542cb611bf" name="Changes" comment="init">
+    <list default="true" id="14d56f55-093d-4411-8491-5a542cb611bf" name="Changes" comment="fixed metrics &amp; added NRE, DRE, AD">
+      <change afterPath="$PROJECT_DIR$/main/analysis/accuracy.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main/analysis/longterm.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main/analysis/utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main/home.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main/stack/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/tracker.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/tracker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/utils/tracker_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/utils/tracker_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main/web/home.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/web/home.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/utils/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/utils/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/web/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/analysis/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/web/home.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/web/pages/1_errors.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/pages/1_errors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main/web/pages/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/main/pages/__init__.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,22 +50,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.tracker.executor&quot;: &quot;Run&quot;,
-    &quot;Python.tracker_test (1).executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/box_of_the_fox/IdeaProjects/Object Tracking Testing/raw/tests/vot2022_sts&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.tracker.executor": "Run",
+    "Python.tracker_test (1).executor": "Run",
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/home/box_of_the_fox/IdeaProjects/Object Tracking Testing/main/utils/utils.py",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
-}</component>
+}]]></component>
   <component name="PyConsoleOptionsProvider">
     <option name="myPythonConsoleState">
       <console-settings module-name="Object Tracking Testing" sdk-home="$PROJECT_DIR$/venv/bin/python">
@@ -82,15 +89,15 @@
       <recent name="$PROJECT_DIR$/raw/dog" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/main" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/main/web" />
-      <recent name="$PROJECT_DIR$/main" />
       <recent name="$PROJECT_DIR$/main/tracker/utils" />
       <recent name="$PROJECT_DIR$/web" />
     </key>
   </component>
   <component name="RunManager" selected="Python.tracker">
-    <configuration name="home (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="home" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Object Tracking Testing" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -103,7 +110,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main/web/home.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main/home.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -275,7 +282,23 @@
       <option name="project" value="LOCAL" />
       <updated>1703781482765</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="fixed metrics &amp; added NRE, DRE, AD">
+      <option name="closed" value="true" />
+      <created>1704739863636</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1704739863636</updated>
+    </task>
+    <task id="LOCAL-00009" summary="fixed metrics &amp; added NRE, DRE, AD">
+      <option name="closed" value="true" />
+      <created>1704739922066</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1704739922066</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -303,7 +326,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init" />
-    <option name="LAST_COMMIT_MESSAGE" value="init" />
+    <MESSAGE value="fixed metrics &amp; added NRE, DRE, AD" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed metrics &amp; added NRE, DRE, AD" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

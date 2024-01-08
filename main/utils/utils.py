@@ -1,9 +1,18 @@
+import csv
+import inspect
 from typing import Any
 
 import numpy
+import pandas
+import streamlit as st
 from numpy._typing import _64Bit
 from scipy.spatial import ConvexHull
 from shapely import Polygon
+
+from analysis.utils import create_polygon
+
+from analysis.utils import polygon_to_array
+from stack import results_file
 
 
 # https://gis.stackexchange.com/questions/22895/finding-minimum-area-rectangle-for-given-points/169633#169633
@@ -90,3 +99,49 @@ def polygon_to_tuple(polygon: Polygon) -> tuple[int, int, int, int] | None:
     _min_y = max(0, int(min([i[1] for i in _l])))
 
     return _min_x, _min_y, _max_x - _min_x, _max_y - _min_y
+
+
+def get_concrete_classes(cls):
+    for subclass in cls.__subclasses__():
+        yield from get_concrete_classes(subclass)
+        if not inspect.isabstract(subclass):
+            yield subclass
+
+
+def get_ground_truth_positions(_file_name: str) -> list[Polygon]:
+    with open(_file_name) as csvfile:
+        # _ground_truth_pos = [[int(x) for x in y] for y in csv.reader(csvfile, delimiter='\t')]
+        _ground_truth_pos = [create_polygon([abs(int(float(x))) for x in y]) for y in csv.reader(csvfile)]
+
+    return _ground_truth_pos
+
+
+def save_results(
+        tracker: str,
+        dataset: str,
+        sequences: list[str],
+        trajectories: list[list[Polygon | None]],
+        groundtruths: list[list[Polygon]],
+):
+    df = pandas.DataFrame({
+        'tracker': tracker,
+        'dataset': dataset,
+        'sequence': sequences,
+        'trajectory': trajectories,
+        'groundtruth': groundtruths,
+    })
+
+    st.session_state.results = pandas.concat([
+        st.session_state.results,
+        df
+    ])
+
+    df = pandas.DataFrame({
+        'tracker': tracker,
+        'dataset': dataset,
+        'sequence': sequences,
+        'trajectory': [[[] if polygon is None else polygon_to_array(polygon) for polygon in trajectory] for trajectory in trajectories],
+        'groundtruth': [[[] if polygon is None else polygon_to_array(polygon) for polygon in groundtruth] for groundtruth in groundtruths],
+    })
+
+    df.to_csv(results_file, mode='a', header=False, index=False)
