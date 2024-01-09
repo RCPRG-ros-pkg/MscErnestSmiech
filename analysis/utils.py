@@ -18,12 +18,12 @@ def calculate_overlap(first: Polygon | None, second: Polygon | None) -> float:
     return intersect / union
 
 
-def calculate_overlaps(first: "pandas.Series[Polygon]", second: "pandas.Series[Polygon]") -> list[float | None]:
+def calculate_overlaps(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> list[float | None]:
     """ Calculate the overlap between two lists of regions. The function first rasterizes both regions to 2-D binary masks and calculates overlap between them
 
     Args:
-        first: first list of regions
-        second: second list of regions
+        trajectory: first list of regions
+        groundtruth: second list of regions
 
     Returns:
         list of floats with the overlap between the two regions. Note that overlap is one by definition if both regions are empty.
@@ -31,9 +31,9 @@ def calculate_overlaps(first: "pandas.Series[Polygon]", second: "pandas.Series[P
     Raises:
         RegionException: if the lists are not of the same size
     """
-    if not len(first) == len(second):
-        raise Exception("List not of the same size {} != {}".format(len(first), len(second)))
-    return [calculate_overlap(pairs[0], pairs[1]) for i, pairs in enumerate(zip(first, second))]
+    if not len(trajectory) == len(groundtruth):
+        raise Exception("List not of the same size {} != {}".format(len(trajectory), len(groundtruth)))
+    return [calculate_overlap(pairs[0], pairs[1]) for i, pairs in enumerate(zip(trajectory, groundtruth))]
 
 
 def create_polygon(_points: list[int | float] | tuple[int | float]) -> Polygon:

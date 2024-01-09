@@ -6,7 +6,7 @@ from shapely import Polygon
 from analysis.utils import calculate_overlaps
 
 
-def gather_overlaps(trajectory: "pandas.Series[Polygon]", groundtruth: "pandas.Series[Polygon]",
+def gather_overlaps(trajectory: list[Polygon | None], groundtruth: list[Polygon],
                     ignore_invisible: bool = False, threshold: float = -1) -> numpy.ndarray:
     overlaps = numpy.array(calculate_overlaps(trajectory, groundtruth))
     mask = numpy.ones(len(overlaps), dtype=bool)
@@ -24,74 +24,89 @@ def gather_overlaps(trajectory: "pandas.Series[Polygon]", groundtruth: "pandas.S
     return overlaps[mask]
 
 
-def success_plot(tracker: str, dataset: str, sequence: str) -> list[tuple[float, float]]:
-    g = st.session_state.results
-    trajectories_groundtruths = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset) & (g['sequence'] == sequence), ["trajectory", "groundtruth"]]
+def success_plot(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> list[tuple[float, float]]:
     axis_x = numpy.linspace(0, 1, 100)
     axis_y = numpy.zeros_like(axis_x)
 
-    for trajectory, groundtruth in zip(trajectories_groundtruths['trajectory'], trajectories_groundtruths['groundtruth']):
-        overlaps = gather_overlaps(trajectory, groundtruth)
-        if overlaps.size > 0:
-            for i, threshold in enumerate(axis_x):
-                if threshold == 1:
-                    # Nicer handling of the edge case
-                    axis_y[i] += numpy.sum(overlaps >= threshold) / len(overlaps)
-                else:
-                    axis_y[i] += numpy.sum(overlaps > threshold) / len(overlaps)
-
-    axis_y /= len(trajectories_groundtruths)
+    overlaps = gather_overlaps(trajectory, groundtruth)
+    if overlaps.size > 0:
+        for i, threshold in enumerate(axis_x):
+            if threshold == 1:
+                # Nicer handling of the edge case
+                axis_y[i] += numpy.sum(overlaps >= threshold) / len(overlaps)
+            else:
+                axis_y[i] += numpy.sum(overlaps > threshold) / len(overlaps)
 
     return [(x, y) for x, y in zip(axis_x, axis_y)]
 
 
-def average_success_plot():
-    ret_df = pandas.DataFrame(columns=['Tracker', 'Dataset', 'Threshold', 'Success'])
-
-    for (tracker, dataset), g in st.session_state.results.groupby(['tracker', 'dataset']):
-        sequences = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), 'sequence'].unique()
-        axis_x = numpy.linspace(0, 1, 100)
-        axis_y = numpy.zeros_like(axis_x)
-
-        for sequence in sequences:
-            for j, (_, y) in enumerate(success_plot(tracker, dataset, sequence)):
-                axis_y[j] += y
-
-        axis_y /= len(sequences)
-
-        ret_df = pandas.concat([ret_df, pandas.DataFrame(
-            {'Tracker': [tracker] * len(axis_x), 'Dataset': [dataset] * len(axis_x), 'Threshold': axis_x,
-             'Success': axis_y})])
-
-    return ret_df
-
-
-def sequence_accuracy(tracker: str, dataset: str, sequence: str, ignore_invisible: bool = False, threshold: float = -1) -> float:
+def average_success_plot(
+        tracker: str,
+        dataset: str,
+        trajectories: list[list[Polygon | None]],
+        groundtruths: list[list[Polygon]]
+):
     g = st.session_state.results
-    trajectories_groundtruths = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset) & (g['sequence'] == sequence), ["trajectory", "groundtruth"]]
+    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
+    _trajectories = trajectories + df['trajectory'].tolist()
+    _groundtruths = groundtruths + df['groundtruth'].tolist()
+
+    axis_x = numpy.linspace(0, 1, 100)
+    axis_y = numpy.zeros_like(axis_x)
+    count = 0
+
+    for trajectory, groundtruth in zip(_trajectories, _groundtruths):
+        for j, (_, y) in enumerate(success_plot(trajectory, groundtruth)):
+            axis_y[j] += y
+
+        count += 1
+
+    axis_y /= count
+
+    df = st.session_state.cache['average_success_plot']
+    try:
+        df.drop(df[(df['Tracker'] == tracker) & (df['Dataset'] == dataset)].index, inplace=True)
+    except KeyError:
+        pass
+    st.session_state.cache['average_success_plot'] = pandas.concat([
+        df,
+        pandas.DataFrame({
+            'Tracker': [tracker] * len(axis_x),
+            'Dataset': [dataset] * len(axis_x),
+            'Threshold': axis_x,
+            'Success': axis_y
+        })
+    ], ignore_index=True)
+
+
+def sequence_accuracy(trajectory: list[Polygon | None], groundtruth: list[Polygon], ignore_invisible: bool = False, threshold: float = -1) -> float:
     cummulative = 0
-    for trajectory, groundtruth in zip(trajectories_groundtruths['trajectory'], trajectories_groundtruths['groundtruth']):
-        overlaps = gather_overlaps(trajectory, groundtruth, ignore_invisible, threshold)
+    overlaps = gather_overlaps(trajectory, groundtruth, ignore_invisible, threshold)
 
-        if overlaps.size > 0:
-            cummulative += numpy.mean(overlaps)
+    if overlaps.size > 0:
+        cummulative += numpy.mean(overlaps)
 
-    return cummulative / len(trajectories_groundtruths)
+    return cummulative
 
 
-def average_accuracy() -> pandas.DataFrame:
-    ret_df = pandas.DataFrame(columns=['Tracker', 'Dataset', 'Quality'])
+def average_accuracy(
+        tracker: str,
+        dataset: str,
+        trajectories: list[list[Polygon | None]],
+        groundtruths: list[list[Polygon]]
+):
+    g = st.session_state.results
+    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
-    for (tracker, dataset), g in st.session_state.results.groupby(['tracker', 'dataset']):
-        accuracy = 0
-        frames = 0
-        sequences = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), 'sequence'].unique()
+    _trajectories = trajectories + df['trajectory'].tolist()
+    _groundtruths = groundtruths + df['groundtruth'].tolist()
 
-        for sequence in sequences:
-            accuracy += sequence_accuracy(tracker, dataset, sequence)
-            frames += 1
+    accuracy = 0
+    count = 0
 
-        ret_df.loc[len(ret_df)] = [tracker, dataset, accuracy / frames]
+    for trajectory, groundtruth in zip(_trajectories, _groundtruths):
+        accuracy += sequence_accuracy(trajectory, groundtruth)
+        count += 1
 
-    return ret_df
+    st.session_state.cache['average_accuracy'].loc[(tracker, dataset), :] = accuracy / count

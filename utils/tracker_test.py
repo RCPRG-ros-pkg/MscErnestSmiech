@@ -178,7 +178,6 @@ def test_tracker(
 
         p1, p2 = handle_tracker_result(ok, bbox, frame)
 
-        # fixme plots dataset x model
         iou = compute_and_display_iou(ground_truth, bbox, ok, frame)
         scores['iou'].append(iou)
         if p1 is not None and p2 is not None:

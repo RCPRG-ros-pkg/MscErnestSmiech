@@ -12,7 +12,7 @@ from shapely import Polygon
 from analysis.utils import create_polygon
 
 from analysis.utils import polygon_to_array
-from stack import results_file
+from stack import results_file, cache_dir
 
 
 # https://gis.stackexchange.com/questions/22895/finding-minimum-area-rectangle-for-given-points/169633#169633
@@ -131,10 +131,12 @@ def save_results(
         'groundtruth': groundtruths,
     })
 
-    st.session_state.results = pandas.concat([
-        st.session_state.results,
-        df
-    ])
+    st.session_state.results = pandas.concat([st.session_state.results, df])
+
+    st.session_state.cache['average_accuracy'].to_csv(f"{cache_dir}/average_accuracy.csv")
+    st.session_state.cache['average_success_plot'].to_csv(f"{cache_dir}/average_success_plot.csv", index=False)
+    st.session_state.cache['average_quality_auxiliary'].to_csv(f"{cache_dir}/average_quality_auxiliary.csv")
+    st.session_state.cache['accuracy_robustness'].to_csv(f"{cache_dir}/accuracy_robustness.csv")
 
     df = pandas.DataFrame({
         'tracker': tracker,
