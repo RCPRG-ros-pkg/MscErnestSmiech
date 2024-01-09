@@ -229,7 +229,7 @@ class TestsPage:
             self.current_example_bar.progress(current_frame / total_frames, text=f"Testing with {self.sequence}")
 
     def display_frame(self, frame: numpy.ndarray):
-        self.current_frame_image.image(frame)
+        self.current_frame_image.image(frame, channels="BGR")
 
 
 testsPage = TestsPage()
