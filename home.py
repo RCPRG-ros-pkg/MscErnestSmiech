@@ -24,9 +24,6 @@ class TestsPage:
     current_frame_image: DeltaGenerator | None = None
     current_example_bar: DeltaGenerator | None = None
     all_examples_bar: DeltaGenerator | None = None
-    iou_quality_chart: DeltaGenerator | None = None
-    iou_ar_chart: DeltaGenerator | None = None
-    result_table: DeltaGenerator | None = None
 
     def __init__(self) -> None:
         super().__init__()
@@ -76,10 +73,17 @@ class TestsPage:
             st.session_state.trackers = [_tracker() for _tracker in tracker.get_concrete_classes(tracker.Tracker)]
 
         self.sidebar()
-        self.main_page()  # fixme znikające wykresy przy starcie
+
+        if self.submitted:
+            self.current_frame_image = st.empty()
+            self.current_example_bar = st.progress(0)
+            self.all_examples_bar = st.progress(0)
+
         self.handle_submitted()
-        self.draw_scores()
-        self.draw_table()
+
+        st.header("Results")
+        self.draw_iou_scores()
+        self.draw_iou_table()
 
     def sidebar(self) -> None:
         with st.sidebar.form("Options"):
@@ -92,27 +96,13 @@ class TestsPage:
                 st.session_state.selection.append((tracker, selected_dataset))
                 st.session_state.table_selected_trackers.loc[(tracker, selected_dataset), :] = True
 
-    def main_page(self) -> None:
-        self.current_frame_image = st.empty()
 
-        self.current_example_bar = st.progress(0)
-        self.current_example_bar.empty()
-
-        self.all_examples_bar = st.progress(0)
-        self.all_examples_bar.empty()
-
-        st.header("Results")
-
+    @staticmethod
+    def draw_iou_scores():
         st.subheader("IoU")
 
         iou_quality, iou_ar = st.columns(2)
-        iou_quality.text("Quality plot")
-        iou_ar.text("AR plot")
-        self.iou_quality_chart = iou_quality.empty()
-        self.iou_ar_chart = iou_ar.empty()
-        self.result_table = st.empty()
 
-    def draw_scores(self):
         selected = st.session_state.table_selected_trackers
         selected = selected.loc[selected['Selected'] == True]
         if selected.empty:
@@ -123,25 +113,26 @@ class TestsPage:
         ts = ts.reset_index()
         ts['TrackerDataset'] = ts[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
         if len(ts) > 0:
-            self.iou_quality_chart.line_chart(ts, x='Threshold', y='Success', color='TrackerDataset', height=300)
+            iou_quality.text("Quality plot")
+            iou_quality.line_chart(ts, x='Threshold', y='Success', color='TrackerDataset', height=300)
 
         ra = st.session_state.cache['accuracy_robustness']
         ra = ra.loc[selected.index]
         ra = ra.reset_index()
         ra['TrackerDataset'] = ra[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
         if len(ra) > 0:
-            self.iou_ar_chart.scatter_chart(ra, x='Robustness', y='Accuracy', color='TrackerDataset', height=300)
+            iou_ar.text("AR plot")
+            iou_ar.scatter_chart(ra, x='Robustness', y='Accuracy', color='TrackerDataset', height=300)
 
-    def on_table_change(self, foo): # fixme something wrong with selecting
-        if 'show_trackers' in st.session_state:
-            edited = st.session_state.show_trackers['edited_rows']
+    @staticmethod
+    def on_iou_table_change(foo): # fixme something wrong with selecting
+        if 'show_iou_trackers' in st.session_state:
+            edited = st.session_state.show_iou_trackers['edited_rows']
 
             for i in edited:
                 st.session_state.table_selected_trackers.loc[*foo.iloc[i].tolist()] = edited[i]['Selected']
 
-            self.draw_scores()
-
-    def draw_table(self):
+    def draw_iou_table(self):
         ts = st.session_state.cache['average_success_plot']
         ra = st.session_state.cache['accuracy_robustness']
         qa = st.session_state.cache['average_quality_auxiliary']
@@ -158,7 +149,7 @@ class TestsPage:
             axis=1,
         ).rename(columns={0: 'success'}).reset_index()
 
-        self.result_table = st.data_editor(
+        st.data_editor(
             df,
             column_config={
                 "tracker": "Tracker",
@@ -179,9 +170,9 @@ class TestsPage:
                 ),
             },
             disabled=['tracker', "dataset", "robustness", "accuracy", "success", 'nre', 'dre', 'ad', 'quality'],
-            on_change=self.on_table_change(df[['Tracker', 'Dataset']]),
+            on_change=self.on_iou_table_change(df[['Tracker', 'Dataset']]),
             use_container_width=True,
-            key='show_trackers',
+            key='show_iou_trackers',
             column_order=["Tracker", "Dataset", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD', "success", "Selected"],
             hide_index=True
         )
@@ -218,7 +209,6 @@ class TestsPage:
                 average_accuracy(_selection[0], _selection[1], trajectories, groundtruths)
                 average_success_plot(_selection[0], _selection[1], trajectories, groundtruths)
                 save_results(_selection[0], _selection[1], sequences, trajectories, groundtruths)
-                self.draw_scores()
             st.session_state.selection = []
             self.all_examples_bar.empty()
             self.current_example_bar.empty()
