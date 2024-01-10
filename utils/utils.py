@@ -120,6 +120,7 @@ def save_results(
         tracker: str,
         dataset: str,
         sequences: list[str],
+        times: list[list[int]],
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]],
 ):
@@ -129,13 +130,16 @@ def save_results(
         'sequence': sequences,
         'trajectory': trajectories,
         'groundtruth': groundtruths,
+        'times': times
     })
 
     st.session_state.results = pandas.concat([st.session_state.results, df])
 
     st.session_state.cache['average_accuracy'].to_csv(f"{cache_dir}/average_accuracy.csv")
+    st.session_state.cache['average_time'].to_csv(f"{cache_dir}/average_time.csv")
     st.session_state.cache['average_success_plot'].to_csv(f"{cache_dir}/average_success_plot.csv", index=False)
     st.session_state.cache['average_quality_auxiliary'].to_csv(f"{cache_dir}/average_quality_auxiliary.csv")
+    st.session_state.cache['average_time_quality_auxiliary'].to_csv(f"{cache_dir}/average_time_quality_auxiliary.csv")
     st.session_state.cache['accuracy_robustness'].to_csv(f"{cache_dir}/accuracy_robustness.csv")
 
     df = pandas.DataFrame({
@@ -144,6 +148,7 @@ def save_results(
         'sequence': sequences,
         'trajectory': [[[] if polygon is None else polygon_to_array(polygon) for polygon in trajectory] for trajectory in trajectories],
         'groundtruth': [[[] if polygon is None else polygon_to_array(polygon) for polygon in groundtruth] for groundtruth in groundtruths],
+        'times': times
     })
 
     df.to_csv(results_file, mode='a', header=False, index=False)

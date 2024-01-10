@@ -8,8 +8,6 @@ from typing import Callable, List
 import cv2
 import numpy as np
 import numpy.typing
-import pandas
-from pandas import DataFrame
 from shapely.geometry import Polygon
 
 from utils.capture import ImageCapture, VideoCapture
@@ -136,19 +134,15 @@ def test_tracker(
         _iou_threshold_for_recording=.0,
         listener: Callable[[int, int], None] = None,
         frame_listener: Callable[[numpy.ndarray], None] = None
-) -> tuple[numpy.ndarray, DataFrame, list[Polygon|None]]:
+) -> tuple[list[int], list[Polygon|None]]:
     cap, frame = init_video_capture(_dataset_dir)
     ground_truth_polygons = get_ground_truth_positions(f'{_dataset_dir}/groundtruth.txt')
     _tracker.init(ground_truth_polygons[0], frame)
     errors_dir = prepare_dirs(_tracker.name, _dataset_dir.split('/'))
 
     trajectories: list[Polygon|None] = []
+    detection_time: list[int] = []
 
-    scores = {
-        "iou": [],
-        "detection_time": [],
-        'failure_rate': 0
-    }
     while cap.isOpened():
         if listener is not None:
             listener(cap.get(cv2.CAP_PROP_FRAME_COUNT), cap.get(cv2.CAP_PROP_POS_FRAMES))
@@ -179,9 +173,7 @@ def test_tracker(
         p1, p2 = handle_tracker_result(ok, bbox, frame)
 
         iou = compute_and_display_iou(ground_truth, bbox, ok, frame)
-        scores['iou'].append(iou)
-        if p1 is not None and p2 is not None:
-            scores['detection_time'].append(_detection_time)
+        detection_time.append(int(_detection_time))
 
         if _show_tracking:
             cv2.imshow('frame', frame)
@@ -193,7 +185,6 @@ def test_tracker(
         if iou <= _iou_threshold_for_correction:
             if ground_truth.area != 0.:
                 _tracker.init(ground_truth, frame)
-            scores['failure_rate'] += 1
 
         # Exit the loop if the 'q' key is pressed
         if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -202,4 +193,4 @@ def test_tracker(
     cap.release()
     cv2.destroyAllWindows()
 
-    return numpy.asarray(scores['iou']), pandas.DataFrame(data=scores['detection_time'], columns=['detection_time']), trajectories
+    return detection_time, trajectories

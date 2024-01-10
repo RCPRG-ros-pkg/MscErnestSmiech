@@ -13,7 +13,7 @@ def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
     T, F, M, H, N = 0, 0, 0, 0, 0
 
     for i, (region_tr, region_gt) in enumerate(zip(trajectory, groundtruth)):
-        if not region_gt:
+        if region_gt.area == 0:
             if not region_tr:
                 N += 1
             else:
@@ -65,7 +65,7 @@ def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygo
     if N + H > 10:
         absence_detection = N / (N + H)
     else:
-        absence_detection = None
+        absence_detection = 0
 
     return not_reported_error, drift_rate_error, absence_detection
 

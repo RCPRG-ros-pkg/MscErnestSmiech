@@ -6,6 +6,7 @@ import pandas
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
+from analysis.time import average_time_quality_auxiliary, average_time
 from utils.utils import save_results
 from stack import datasets, results_dir, results_file, cache_dir
 from utils.tracker_test import get_ground_truth_positions
@@ -31,7 +32,7 @@ class TestsPage:
             try:
                 os.makedirs(results_dir)
                 st.session_state.results = pandas.DataFrame(
-                    columns=['tracker', 'dataset', 'sequence', 'trajectory', 'groundtruth'],
+                    columns=['tracker', 'dataset', 'sequence', 'trajectory', 'groundtruth', 'times'],
                     dtype=object
                 )
                 st.session_state.results.to_csv(results_file, mode='x', index=False)
@@ -40,28 +41,39 @@ class TestsPage:
                 st.session_state.results = pandas.read_csv(results_file)
                 trajectories = st.session_state.results.trajectory.apply(json.loads)
                 groundtruths = st.session_state.results.groundtruth.apply(json.loads)
+                # times = st.session_state.results.times.apply(json.loads)
+                # print(times)
                 st.session_state.results.trajectory = [[create_polygon(points) if points != [] else None for points in trajectory] for trajectory in trajectories]
                 st.session_state.results.groundtruth = [[create_polygon(points) if points != [] else None for points in groundtruth] for groundtruth in groundtruths]
+                # st.session_state.results.times = times
         if 'cache' not in st.session_state:
             index=pandas.MultiIndex.from_tuples([], names=['Tracker', 'Dataset'])
             st.session_state.cache = {
                 'average_accuracy': pandas.DataFrame(index=index, columns=['Quality']),
+                'average_time': pandas.DataFrame(index=index, columns=['Quality']),
                 'average_success_plot': pandas.DataFrame(columns=['Tracker', 'Dataset', 'Threshold', 'Success']),
                 'average_quality_auxiliary': pandas.DataFrame(index=index, columns=['NRE', 'DRE', 'AD']),
+                'average_time_quality_auxiliary': pandas.DataFrame(index=index, columns=['Robustness', 'NRE', 'DRE', 'AD']),
                 'accuracy_robustness': pandas.DataFrame(index=index, columns=['Robustness', 'Accuracy']),
             }
             try:
                 os.makedirs(cache_dir)
                 st.session_state.cache['average_accuracy'].to_csv(f"{cache_dir}/average_accuracy.csv", mode='x', index=False)
+                st.session_state.cache['average_time'].to_csv(f"{cache_dir}/average_time.csv", mode='x', index=False)
                 st.session_state.cache['average_success_plot'].to_csv(f"{cache_dir}/average_success_plot.csv", mode='x', index=False)
                 st.session_state.cache['average_quality_auxiliary'].to_csv(f"{cache_dir}/average_quality_auxiliary.csv", mode='x', index=False)
+                st.session_state.cache['average_time_quality_auxiliary'].to_csv(f"{cache_dir}/average_time_quality_auxiliary.csv", mode='x', index=False)
                 st.session_state.cache['accuracy_robustness'].to_csv(f"{cache_dir}/accuracy_robustness.csv", mode='x', index=False)
             except FileExistsError:
                 st.session_state.cache['average_accuracy'] = pandas.read_csv(f"{cache_dir}/average_accuracy.csv")
                 st.session_state.cache['average_accuracy'] = st.session_state.cache['average_accuracy'].set_index(['Tracker', 'Dataset'])
+                st.session_state.cache['average_time'] = pandas.read_csv(f"{cache_dir}/average_time.csv")
+                st.session_state.cache['average_time'] = st.session_state.cache['average_time'].set_index(['Tracker', 'Dataset'])
                 st.session_state.cache['average_success_plot'] = pandas.read_csv(f"{cache_dir}/average_success_plot.csv")
                 st.session_state.cache['average_quality_auxiliary'] = pandas.read_csv(f"{cache_dir}/average_quality_auxiliary.csv")
                 st.session_state.cache['average_quality_auxiliary'] = st.session_state.cache['average_quality_auxiliary'].set_index(['Tracker', 'Dataset'])
+                st.session_state.cache['average_time_quality_auxiliary'] = pandas.read_csv(f"{cache_dir}/average_time_quality_auxiliary.csv")
+                st.session_state.cache['average_time_quality_auxiliary'] = st.session_state.cache['average_time_quality_auxiliary'].set_index(['Tracker', 'Dataset'])
                 st.session_state.cache['accuracy_robustness'] = pandas.read_csv(f"{cache_dir}/accuracy_robustness.csv")
                 st.session_state.cache['accuracy_robustness'] = st.session_state.cache['accuracy_robustness'].set_index(['Tracker', 'Dataset'])
         if 'selection' not in st.session_state:
@@ -82,8 +94,11 @@ class TestsPage:
         self.handle_submitted()
 
         st.header("Results")
+        st.subheader("IoU")
         self.draw_iou_scores()
         self.draw_iou_table()
+        st.subheader("Time")
+        self.draw_time_table()
 
     def sidebar(self) -> None:
         with st.sidebar.form("Options"):
@@ -99,8 +114,6 @@ class TestsPage:
 
     @staticmethod
     def draw_iou_scores():
-        st.subheader("IoU")
-
         iou_quality, iou_ar = st.columns(2)
 
         selected = st.session_state.table_selected_trackers
@@ -177,6 +190,38 @@ class TestsPage:
             hide_index=True
         )
 
+    @staticmethod
+    def draw_time_table():
+        qa = st.session_state.cache['average_time_quality_auxiliary']
+        ac = st.session_state.cache['average_time']
+
+        if len(qa) <= 0 or len(ac) <= 0:
+            return
+
+        df = pandas.concat(
+            [ac, qa, st.session_state.table_selected_trackers],
+            axis=1,
+        ).reset_index()
+
+        st.data_editor(
+            df,
+            column_config={
+                "tracker": "Tracker",
+                "dataset": "Dataset",
+                "quality": "Quality",
+                "accuracy": "Accuracy",
+                "robustness": "Robustness",
+                "nre": "NRE",
+                "dre": "DRE",
+                "ad": "AD"
+            },
+            disabled=['tracker', "dataset", "robustness", 'nre', 'dre', 'ad', 'quality', 'accuracy'],
+            use_container_width=True,
+            key='show_time_trackers',
+            column_order=["Tracker", "Dataset", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD'],
+            hide_index=True
+        )
+
     def handle_submitted(self) -> None:
         if self.submitted:
             # tracker, dataset
@@ -188,16 +233,18 @@ class TestsPage:
 
                 trajectories = []
                 groundtruths = []
+                detection_times = []
                 for index, sequence in enumerate(sequences):
                     self.all_examples_bar.progress(index / len(sequences), text=f"Testing {index + 1} out of {len(sequences)} films")
                     self.sequence = sequence
                     _tracker: tracker.Tracker = next(x for x in st.session_state.trackers if x.name == _selection[0])
-                    _, _, trajectory = _tracker.test(
+                    detection_time, trajectory = _tracker.test(
                         f'{datasets[_selection[1]]}/{sequence}',
                         listener=self.display_bar,
                         frame_listener=self.display_frame,
                         iou_threshold_for_correction=-1
                     )
+                    detection_times.append(detection_time)
                     trajectories.append(trajectory)
                     # [1:] because first frame is consumed for init of tracker
                     groundtruths.append(
@@ -208,7 +255,9 @@ class TestsPage:
                 average_quality_auxiliary(_selection[0], _selection[1], trajectories, groundtruths)
                 average_accuracy(_selection[0], _selection[1], trajectories, groundtruths)
                 average_success_plot(_selection[0], _selection[1], trajectories, groundtruths)
-                save_results(_selection[0], _selection[1], sequences, trajectories, groundtruths)
+                average_time_quality_auxiliary(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
+                average_time(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
+                save_results(_selection[0], _selection[1], sequences, detection_times, trajectories, groundtruths)
             st.session_state.selection = []
             self.all_examples_bar.empty()
             self.current_example_bar.empty()

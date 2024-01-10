@@ -6,8 +6,12 @@ from shapely import Polygon
 from analysis.utils import calculate_overlaps
 
 
-def gather_overlaps(trajectory: list[Polygon | None], groundtruth: list[Polygon],
-                    ignore_invisible: bool = False, threshold: float = -1) -> numpy.ndarray:
+def gather_overlaps(
+        trajectory: list[Polygon | None],
+        groundtruth: list[Polygon],
+        ignore_invisible: bool = False,
+        threshold: float = -1
+) -> numpy.ndarray:
     overlaps = numpy.array(calculate_overlaps(trajectory, groundtruth))
     mask = numpy.ones(len(overlaps), dtype=bool)
 
