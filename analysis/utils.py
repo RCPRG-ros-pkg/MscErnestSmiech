@@ -3,9 +3,16 @@ import pandas
 from shapely import Polygon
 
 
-def polygon_to_array(polygon: Polygon) -> list[float]:
+def polygon_to_floatarray(polygon: Polygon) -> list[float]:
     _xx, _yy = polygon.exterior.coords.xy
-    _coords = numpy.array(tuple(zip(_xx, _yy))).astype(float) # todo unnecessary?
+    _coords = numpy.array(tuple(zip(_xx, _yy))).astype(float)
+
+    return [x for xs in _coords for x in xs]
+
+
+def polygon_to_intarray(polygon: Polygon) -> list[int]:
+    _xx, _yy = polygon.exterior.coords.xy
+    _coords = numpy.array(tuple(zip(_xx, _yy))).astype(int)
 
     return [x for xs in _coords for x in xs]
 

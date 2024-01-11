@@ -6,6 +6,7 @@ import pandas
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
+from analysis.stt_iou import average_stt_iou
 from analysis.time import average_time_quality_auxiliary, average_time
 from utils.utils import save_results
 from stack import datasets, results_dir, results_file, cache_dir
@@ -41,14 +42,12 @@ class TestsPage:
                 st.session_state.results = pandas.read_csv(results_file)
                 trajectories = st.session_state.results.trajectory.apply(json.loads)
                 groundtruths = st.session_state.results.groundtruth.apply(json.loads)
-                # times = st.session_state.results.times.apply(json.loads)
-                # print(times)
                 st.session_state.results.trajectory = [[create_polygon(points) if points != [] else None for points in trajectory] for trajectory in trajectories]
                 st.session_state.results.groundtruth = [[create_polygon(points) if points != [] else None for points in groundtruth] for groundtruth in groundtruths]
-                # st.session_state.results.times = times
         if 'cache' not in st.session_state:
             index=pandas.MultiIndex.from_tuples([], names=['Tracker', 'Dataset'])
             st.session_state.cache = {
+                'average_stt_iou': pandas.DataFrame(index=index, columns=['STT-IOU']),
                 'average_accuracy': pandas.DataFrame(index=index, columns=['Quality']),
                 'average_time': pandas.DataFrame(index=index, columns=['Quality']),
                 'average_success_plot': pandas.DataFrame(columns=['Tracker', 'Dataset', 'Threshold', 'Success']),
@@ -58,6 +57,7 @@ class TestsPage:
             }
             try:
                 os.makedirs(cache_dir)
+                st.session_state.cache['average_stt_iou'].to_csv(f"{cache_dir}/average_stt_iou.csv", mode='x', index=False)
                 st.session_state.cache['average_accuracy'].to_csv(f"{cache_dir}/average_accuracy.csv", mode='x', index=False)
                 st.session_state.cache['average_time'].to_csv(f"{cache_dir}/average_time.csv", mode='x', index=False)
                 st.session_state.cache['average_success_plot'].to_csv(f"{cache_dir}/average_success_plot.csv", mode='x', index=False)
@@ -65,6 +65,8 @@ class TestsPage:
                 st.session_state.cache['average_time_quality_auxiliary'].to_csv(f"{cache_dir}/average_time_quality_auxiliary.csv", mode='x', index=False)
                 st.session_state.cache['accuracy_robustness'].to_csv(f"{cache_dir}/accuracy_robustness.csv", mode='x', index=False)
             except FileExistsError:
+                st.session_state.cache['average_stt_iou'] = pandas.read_csv(f"{cache_dir}/average_stt_iou.csv")
+                st.session_state.cache['average_stt_iou'] = st.session_state.cache['average_stt_iou'].set_index(['Tracker', 'Dataset'])
                 st.session_state.cache['average_accuracy'] = pandas.read_csv(f"{cache_dir}/average_accuracy.csv")
                 st.session_state.cache['average_accuracy'] = st.session_state.cache['average_accuracy'].set_index(['Tracker', 'Dataset'])
                 st.session_state.cache['average_time'] = pandas.read_csv(f"{cache_dir}/average_time.csv")
@@ -150,6 +152,7 @@ class TestsPage:
         ra = st.session_state.cache['accuracy_robustness']
         qa = st.session_state.cache['average_quality_auxiliary']
         ac = st.session_state.cache['average_accuracy']
+        stt = st.session_state.cache['average_stt_iou']
 
         if len(ts) <= 0 or len(ra) <= 0 or len(qa) <= 0 or len(ac) <= 0:
             return
@@ -158,7 +161,7 @@ class TestsPage:
         success = ts.groupby(['Tracker', 'Dataset']).apply(lambda x: x['Success'].tolist())
 
         df = pandas.concat(
-            [ac, ra, qa, success, st.session_state.table_selected_trackers],
+            [stt, ac, ra, qa, success, st.session_state.table_selected_trackers],
             axis=1,
         ).rename(columns={0: 'success'}).reset_index()
 
@@ -167,6 +170,7 @@ class TestsPage:
             column_config={
                 "tracker": "Tracker",
                 "dataset": "Dataset",
+                "stt_iou": "STT-IOU",
                 "quality": "Quality",
                 "accuracy": "Accuracy",
                 "robustness": "Robustness",
@@ -182,11 +186,11 @@ class TestsPage:
                     default=True,
                 ),
             },
-            disabled=['tracker', "dataset", "robustness", "accuracy", "success", 'nre', 'dre', 'ad', 'quality'],
+            disabled=['tracker', "dataset", "robustness", "accuracy", "success", 'nre', 'dre', 'ad', 'quality', "stt_iou"],
             on_change=self.on_iou_table_change(df[['Tracker', 'Dataset']]),
             use_container_width=True,
             key='show_iou_trackers',
-            column_order=["Tracker", "Dataset", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD', "success", "Selected"],
+            column_order=["Tracker", "Dataset", "STT-IOU", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD', "success", "Selected"],
             hide_index=True
         )
 
@@ -255,6 +259,7 @@ class TestsPage:
                 average_quality_auxiliary(_selection[0], _selection[1], trajectories, groundtruths)
                 average_accuracy(_selection[0], _selection[1], trajectories, groundtruths)
                 average_success_plot(_selection[0], _selection[1], trajectories, groundtruths)
+                average_stt_iou(_selection[0], _selection[1], trajectories, groundtruths)
                 average_time_quality_auxiliary(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
                 average_time(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
                 save_results(_selection[0], _selection[1], sequences, detection_times, trajectories, groundtruths)

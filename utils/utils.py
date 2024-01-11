@@ -11,7 +11,7 @@ from shapely import Polygon
 
 from analysis.utils import create_polygon
 
-from analysis.utils import polygon_to_array
+from analysis.utils import polygon_to_floatarray
 from stack import results_file, cache_dir
 
 
@@ -136,6 +136,7 @@ def save_results(
     st.session_state.results = pandas.concat([st.session_state.results, df])
 
     st.session_state.cache['average_accuracy'].to_csv(f"{cache_dir}/average_accuracy.csv")
+    st.session_state.cache['average_stt_iou'].to_csv(f"{cache_dir}/average_stt_iou.csv")
     st.session_state.cache['average_time'].to_csv(f"{cache_dir}/average_time.csv")
     st.session_state.cache['average_success_plot'].to_csv(f"{cache_dir}/average_success_plot.csv", index=False)
     st.session_state.cache['average_quality_auxiliary'].to_csv(f"{cache_dir}/average_quality_auxiliary.csv")
@@ -146,8 +147,8 @@ def save_results(
         'tracker': tracker,
         'dataset': dataset,
         'sequence': sequences,
-        'trajectory': [[[] if polygon is None else polygon_to_array(polygon) for polygon in trajectory] for trajectory in trajectories],
-        'groundtruth': [[[] if polygon is None else polygon_to_array(polygon) for polygon in groundtruth] for groundtruth in groundtruths],
+        'trajectory': [[[] if polygon is None else polygon_to_floatarray(polygon) for polygon in trajectory] for trajectory in trajectories],
+        'groundtruth': [[[] if polygon is None else polygon_to_floatarray(polygon) for polygon in groundtruth] for groundtruth in groundtruths],
         'times': times
     })
 
