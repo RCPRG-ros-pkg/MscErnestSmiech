@@ -18,7 +18,9 @@ def polygon_to_intarray(polygon: Polygon) -> list[int]:
 
 
 def calculate_overlap(first: Polygon | None, second: Polygon | None) -> float:
-    if first is None or first.area == 0.0 or second is None or second.area == 0.0:
+    if (first is None or first.area == 0.0) and (second is None or second.area == 0.0):
+        return 1.0
+    elif (first is None or first.area == 0.0) or (second is None or second.area == 0.0):
         return 0.0
     intersect = first.intersection(second).area
     union = first.union(second).area
