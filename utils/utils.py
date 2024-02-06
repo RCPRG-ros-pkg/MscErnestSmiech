@@ -153,3 +153,11 @@ def save_results(
     })
 
     df.to_csv(results_file, mode='a', header=False, index=False)
+
+
+def get_or_create_cache(name: str):
+    try:
+        st.session_state.cache[name].to_csv(f"{cache_dir}/{name}.csv", mode='x', index=False)
+    except:
+        st.session_state.cache[name] = pandas.read_csv(f"{cache_dir}/{name}.csv")
+        st.session_state.cache[name] = st.session_state.cache[name].set_index(['Tracker', 'Dataset'])

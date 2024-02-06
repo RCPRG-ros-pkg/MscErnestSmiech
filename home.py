@@ -8,7 +8,7 @@ from streamlit.delta_generator import DeltaGenerator
 
 from analysis.stt_iou import average_stt_iou
 from analysis.time import average_time_quality_auxiliary, average_time
-from utils.utils import save_results
+from utils.utils import save_results, get_or_create_cache
 from stack import datasets, results_dir, results_file, cache_dir
 from utils.tracker_test import get_ground_truth_positions
 
@@ -55,29 +55,18 @@ class TestsPage:
                 'average_time_quality_auxiliary': pandas.DataFrame(index=index, columns=['Robustness', 'NRE', 'DRE', 'AD']),
                 'accuracy_robustness': pandas.DataFrame(index=index, columns=['Robustness', 'Accuracy']),
             }
-            try:
-                os.makedirs(cache_dir)
-                st.session_state.cache['average_stt_iou'].to_csv(f"{cache_dir}/average_stt_iou.csv", mode='x', index=False)
-                st.session_state.cache['average_accuracy'].to_csv(f"{cache_dir}/average_accuracy.csv", mode='x', index=False)
-                st.session_state.cache['average_time'].to_csv(f"{cache_dir}/average_time.csv", mode='x', index=False)
-                st.session_state.cache['average_success_plot'].to_csv(f"{cache_dir}/average_success_plot.csv", mode='x', index=False)
-                st.session_state.cache['average_quality_auxiliary'].to_csv(f"{cache_dir}/average_quality_auxiliary.csv", mode='x', index=False)
-                st.session_state.cache['average_time_quality_auxiliary'].to_csv(f"{cache_dir}/average_time_quality_auxiliary.csv", mode='x', index=False)
-                st.session_state.cache['accuracy_robustness'].to_csv(f"{cache_dir}/accuracy_robustness.csv", mode='x', index=False)
-            except FileExistsError:
-                st.session_state.cache['average_stt_iou'] = pandas.read_csv(f"{cache_dir}/average_stt_iou.csv")
-                st.session_state.cache['average_stt_iou'] = st.session_state.cache['average_stt_iou'].set_index(['Tracker', 'Dataset'])
-                st.session_state.cache['average_accuracy'] = pandas.read_csv(f"{cache_dir}/average_accuracy.csv")
-                st.session_state.cache['average_accuracy'] = st.session_state.cache['average_accuracy'].set_index(['Tracker', 'Dataset'])
-                st.session_state.cache['average_time'] = pandas.read_csv(f"{cache_dir}/average_time.csv")
-                st.session_state.cache['average_time'] = st.session_state.cache['average_time'].set_index(['Tracker', 'Dataset'])
-                st.session_state.cache['average_success_plot'] = pandas.read_csv(f"{cache_dir}/average_success_plot.csv")
-                st.session_state.cache['average_quality_auxiliary'] = pandas.read_csv(f"{cache_dir}/average_quality_auxiliary.csv")
-                st.session_state.cache['average_quality_auxiliary'] = st.session_state.cache['average_quality_auxiliary'].set_index(['Tracker', 'Dataset'])
-                st.session_state.cache['average_time_quality_auxiliary'] = pandas.read_csv(f"{cache_dir}/average_time_quality_auxiliary.csv")
-                st.session_state.cache['average_time_quality_auxiliary'] = st.session_state.cache['average_time_quality_auxiliary'].set_index(['Tracker', 'Dataset'])
-                st.session_state.cache['accuracy_robustness'] = pandas.read_csv(f"{cache_dir}/accuracy_robustness.csv")
-                st.session_state.cache['accuracy_robustness'] = st.session_state.cache['accuracy_robustness'].set_index(['Tracker', 'Dataset'])
+            os.makedirs(cache_dir, exist_ok=True)
+            names = [
+                'average_stt_iou',
+                'average_accuracy',
+                'average_time',
+                'average_success_plot',
+                'average_quality_auxiliary',
+                'average_time_quality_auxiliary',
+                'accuracy_robustness'
+            ]
+            for n in names:
+                get_or_create_cache(n)
         if 'selection' not in st.session_state:
             st.session_state["selection"]: [(str, str)] = []
         if 'table_selected_trackers' not in st.session_state:
