@@ -6,7 +6,7 @@ from shapely import Polygon
 from analysis.utils import calculate_overlaps
 
 
-def gather_overlaps(
+def gather_overlaps( # jakość - default, dokładność - custom
         trajectory: list[Polygon | None],
         groundtruth: list[Polygon],
         ignore_invisible: bool = False,
@@ -16,10 +16,8 @@ def gather_overlaps(
     mask = numpy.ones(len(overlaps), dtype=bool)
 
     for i, (region_tr, region_gt) in enumerate(zip(trajectory, groundtruth)):
-        # Skip if groundtruth is unknown
         if ignore_invisible and region_gt.area == 0.0:
             mask[i] = False
-        # Skip if predicted is initialization frame
         elif region_tr is None:
             mask[i] = False
         elif overlaps[i] <= threshold:
