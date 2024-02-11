@@ -66,7 +66,7 @@ class TestsPage:
                 'accuracy_robustness'
             ]
             for n in names:
-                get_or_create_cache(n)
+                get_or_create_cache(n, n != 'average_success_plot')
         if 'selection' not in st.session_state:
             st.session_state["selection"]: [(str, str)] = []
         if 'table_selected_trackers' not in st.session_state:
