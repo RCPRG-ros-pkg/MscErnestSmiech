@@ -129,12 +129,12 @@ class TestsPage:
             iou_ar.scatter_chart(ra, x='Robustness', y='Accuracy', color='TrackerDataset', height=300)
 
     @staticmethod
-    def on_iou_table_change(foo): # fixme something wrong with selecting
+    def on_iou_table_change(df_tracker_dataset): # fixme something wrong with selecting
         if 'show_iou_trackers' in st.session_state:
             edited = st.session_state.show_iou_trackers['edited_rows']
 
             for i in edited:
-                st.session_state.table_selected_trackers.loc[*foo.iloc[i].tolist()] = edited[i]['Selected']
+                st.session_state.table_selected_trackers.loc[*df_tracker_dataset.iloc[i].tolist()] = edited[i]['Selected']
 
     def draw_iou_table(self):
         ts = st.session_state.cache['average_success_plot']
@@ -176,11 +176,12 @@ class TestsPage:
                 ),
             },
             disabled=['tracker', "dataset", "robustness", "accuracy", "success", 'nre', 'dre', 'ad', 'quality', "stt_iou"],
-            on_change=self.on_iou_table_change(df[['Tracker', 'Dataset']]),
+            on_change=self.on_iou_table_change,
             use_container_width=True,
             key='show_iou_trackers',
             column_order=["Tracker", "Dataset", "STT-IOU", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD', "success", "Selected"],
-            hide_index=True
+            hide_index=True,
+            args=[df[['Tracker', 'Dataset']]]
         )
 
     @staticmethod
