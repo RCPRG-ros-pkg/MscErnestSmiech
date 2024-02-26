@@ -9,7 +9,7 @@ from streamlit.delta_generator import DeltaGenerator
 from analysis.stt_iou import average_stt_iou
 from analysis.time import average_time_quality_auxiliary, average_time
 from utils.utils import save_results, get_or_create_cache
-from stack import datasets, results_dir, results_file, cache_dir
+from stack import datasets, results_dir, results_file, cache_dir, tests_dir
 from utils.tracker_test import get_ground_truth_positions
 
 from analysis.accuracy import average_success_plot, average_accuracy
@@ -33,17 +33,22 @@ class TestsPage:
             try:
                 os.makedirs(results_dir)
                 st.session_state.results = pandas.DataFrame(
-                    columns=['tracker', 'dataset', 'sequence', 'trajectory', 'groundtruth', 'times'],
+                    columns=['date', 'tracker', 'dataset', 'sequence', 'selected', 'trajectory', 'groundtruth', 'times'],
                     dtype=object
                 )
-                st.session_state.results.to_csv(results_file, mode='x', index=False)
+                _results = pandas.DataFrame(
+                    columns=['date', 'tracker', 'dataset', 'sequence', 'trajectory', 'groundtruth', 'times'],
+                    dtype=object
+                )
+                _results.to_csv(results_file, mode='x', index=False)
             except FileExistsError:
                 # directory already exists
-                st.session_state.results = pandas.read_csv(results_file)
-                trajectories = st.session_state.results.trajectory.apply(json.loads)
-                groundtruths = st.session_state.results.groundtruth.apply(json.loads)
-                st.session_state.results.trajectory = [[create_polygon(points) if points != [] else None for points in trajectory] for trajectory in trajectories]
-                st.session_state.results.groundtruth = [[create_polygon(points) if points != [] else None for points in groundtruth] for groundtruth in groundtruths]
+                _results = pandas.read_csv(results_file)
+                _results.trajectory = [[create_polygon(points) if points != [] else None for points in trajectory] for trajectory in _results['trajectory'].map(json.loads)]
+                _results.groundtruth = [[create_polygon(points) if points != [] else None for points in groundtruth] for groundtruth in _results['groundtruth'].map(json.loads)]
+                _results.times = _results.times.map(json.loads)
+                _results['selected'] = False
+                st.session_state.results = _results
         if 'cache' not in st.session_state:
             index=pandas.MultiIndex.from_tuples([], names=['Tracker', 'Dataset'])
             st.session_state.cache = {
@@ -221,7 +226,8 @@ class TestsPage:
             # tracker, dataset
             for _selection in st.session_state.selection:
                 sequences = []
-                with open(f'{datasets[_selection[1]]}/list.txt') as f:
+                dates = []
+                with open(f'{tests_dir}/{datasets[_selection[1]]}/sequences/list.txt') as f:
                     for line in f.readlines():
                         sequences.append(line.strip())
 
@@ -232,17 +238,18 @@ class TestsPage:
                     self.all_examples_bar.progress(index / len(sequences), text=f"Testing {index + 1} out of {len(sequences)} films")
                     self.sequence = sequence
                     _tracker: tracker.Tracker = next(x for x in st.session_state.trackers if x.name == _selection[0])
-                    detection_time, trajectory = _tracker.test(
-                        f'{datasets[_selection[1]]}/{sequence}',
+                    date, detection_time, trajectory = _tracker.test(
+                        f'{tests_dir}/{datasets[_selection[1]]}/sequences/{sequence}',
                         listener=self.display_bar,
                         frame_listener=self.display_frame,
                         iou_threshold_for_correction=-1
                     )
+                    dates.append(date)
                     detection_times.append(detection_time)
                     trajectories.append(trajectory)
                     # [1:] because first frame is consumed for init of tracker
                     groundtruths.append(
-                        get_ground_truth_positions(f"{datasets[_selection[1]]}/{sequence}/groundtruth.txt")[1:]
+                        get_ground_truth_positions(f"{tests_dir}/{datasets[_selection[1]]}/sequences/{sequence}/groundtruth.txt")[1:]
                     )
 
                 accuracy_robustness(_selection[0], _selection[1], trajectories, groundtruths)
@@ -252,7 +259,7 @@ class TestsPage:
                 average_stt_iou(_selection[0], _selection[1], trajectories, groundtruths)
                 average_time_quality_auxiliary(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
                 average_time(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
-                save_results(_selection[0], _selection[1], sequences, detection_times, trajectories, groundtruths)
+                save_results(dates, _selection[0], _selection[1], sequences, detection_times, trajectories, groundtruths)
             st.session_state.selection = []
             self.all_examples_bar.empty()
             self.current_example_bar.empty()

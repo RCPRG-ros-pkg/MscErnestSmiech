@@ -42,7 +42,7 @@ class Tracker(ABC):
             iou_threshold_for_recording=.0,
             listener: Callable[[int, int], None] = None,
             frame_listener: Callable[[numpy.ndarray], None] = None
-    ) -> tuple[list[int], list[Polygon|None]]:
+    ) -> tuple[str, list[int], list[Polygon|None]]:
         return test_tracker(
             self,
             dataset_dir,

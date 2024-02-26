@@ -117,6 +117,7 @@ def get_ground_truth_positions(_file_name: str) -> list[Polygon]:
 
 
 def save_results(
+        date: list[str],
         tracker: str,
         dataset: str,
         sequences: list[str],
@@ -125,9 +126,11 @@ def save_results(
         groundtruths: list[list[Polygon]],
 ):
     df = pandas.DataFrame({
+        'date': date,
         'tracker': tracker,
         'dataset': dataset,
         'sequence': sequences,
+        'selected': [False]*len(sequences),
         'trajectory': trajectories,
         'groundtruth': groundtruths,
         'times': times
@@ -144,6 +147,7 @@ def save_results(
     st.session_state.cache['accuracy_robustness'].to_csv(f"{cache_dir}/accuracy_robustness.csv")
 
     df = pandas.DataFrame({
+        'date': date,
         'tracker': tracker,
         'dataset': dataset,
         'sequence': sequences,

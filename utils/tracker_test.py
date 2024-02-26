@@ -13,9 +13,7 @@ from shapely.geometry import Polygon
 from utils.capture import ImageCapture, VideoCapture
 
 
-def prepare_dirs(_tracker_name: str, _dataset_name: List[str]):
-    _now = datetime.now()
-    _dt_string = _now.strftime("%Y-%m-%d-%H-%M-%S-%f")
+def prepare_dirs(_dt_string: str, _tracker_name: str, _dataset_name: List[str]):
     _raw_index = _dataset_name.index("raw")
     _errors_dir = f"raw/errors/{_tracker_name}/{_dataset_name[_raw_index + 2]}/{_dataset_name[-1]}/{_dt_string}"
     try:
@@ -134,11 +132,14 @@ def test_tracker(
         _iou_threshold_for_recording=.0,
         listener: Callable[[int, int], None] = None,
         frame_listener: Callable[[numpy.ndarray], None] = None
-) -> tuple[list[int], list[Polygon|None]]:
+) -> tuple[str, list[int], list[Polygon|None]]:
+    now = datetime.now()
+    date_string = now.strftime("%Y-%m-%d-%H-%M-%S-%f")
+
     cap, frame = init_video_capture(_dataset_dir)
     ground_truth_polygons = get_ground_truth_positions(f'{_dataset_dir}/groundtruth.txt')
     _tracker.init(ground_truth_polygons[0], frame)
-    errors_dir = prepare_dirs(_tracker.name, _dataset_dir.split('/'))
+    errors_dir = prepare_dirs(date_string, _tracker.name, _dataset_dir.split('/'))
 
     trajectories: list[Polygon|None] = []
     detection_time: list[int] = []
@@ -193,4 +194,4 @@ def test_tracker(
     cap.release()
     cv2.destroyAllWindows()
 
-    return detection_time, trajectories
+    return date_string, detection_time, trajectories
