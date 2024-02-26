@@ -5,7 +5,11 @@ import streamlit as st
 from shapely import Polygon
 
 from analysis.utils import create_polygon
+from data.state_locator import StateLocator
 from stack import results_file
+
+
+state_locator = StateLocator()
 
 
 def stt_iou(_tr: list[Polygon], _gt: list[Polygon]) -> float:
@@ -31,7 +35,7 @@ def average_stt_iou(
         dataset: str,
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]):
-    g = st.session_state.results
+    g = state_locator.provide_results()
     df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
     _trajectories = trajectories + df['trajectory'].tolist()
@@ -48,7 +52,7 @@ def average_stt_iou(
             continue
         count += 1
 
-    st.session_state.cache['average_stt_iou'].loc[(tracker, dataset), :] = cumulative / count
+    state_locator.provide_cache()['average_stt_iou'].loc[(tracker, dataset), :] = cumulative / count
 
 
 if __name__ == '__main__':

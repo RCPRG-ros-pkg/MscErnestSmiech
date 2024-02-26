@@ -3,6 +3,9 @@ import streamlit as st
 from shapely import Polygon
 
 from analysis.utils import calculate_overlaps
+from data.state_locator import StateLocator
+
+state_locator = StateLocator()
 
 
 def gather_time_in_overlaps(
@@ -52,7 +55,7 @@ def average_time(
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ):
-    g = st.session_state.results
+    g = state_locator.provide_results()
     df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth', 'times']]
 
     _times = times + df['times'].tolist()
@@ -66,7 +69,7 @@ def average_time(
         quality += sequence_time(time, trajectory, groundtruth)
         count += 1
 
-    st.session_state.cache['average_time'].loc[(tracker, dataset), :] = quality / count
+    state_locator.provide_cache()['average_time'].loc[(tracker, dataset), :] = quality / count
 
 
 def count_time_frames(
@@ -132,7 +135,7 @@ def average_time_quality_auxiliary(
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ):
-    g = st.session_state.results
+    g = state_locator.provide_results()
     df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth', 'times']]
     print(g)
     print(df)
@@ -162,4 +165,4 @@ def average_time_quality_auxiliary(
     if absence_count > 0:
         absence_detection /= absence_count
 
-    st.session_state.cache['average_time_quality_auxiliary'].loc[(tracker, dataset), :] = [robustness / count, not_reported_error / count, drift_rate_error / count, absence_detection]
+    state_locator.provide_cache()['average_time_quality_auxiliary'].loc[(tracker, dataset), :] = [robustness / count, not_reported_error / count, drift_rate_error / count, absence_detection]

@@ -4,6 +4,10 @@ from shapely import Polygon
 
 from analysis.accuracy import sequence_accuracy
 from analysis.utils import calculate_overlaps
+from data.state_locator import StateLocator
+
+
+state_locator = StateLocator()
 
 
 def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
@@ -36,7 +40,7 @@ def accuracy_robustness(
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ):
-    g = st.session_state.results
+    g = state_locator.provide_results()
     df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
     _trajectories = trajectories + df['trajectory'].tolist()
@@ -53,7 +57,7 @@ def accuracy_robustness(
         robustness += T / (T + F + M)
         count += 1
 
-    st.session_state.cache['accuracy_robustness'].loc[(tracker, dataset), :] = [robustness / count, accuracy / count]
+    state_locator.provide_cache()['accuracy_robustness'].loc[(tracker, dataset), :] = [robustness / count, accuracy / count]
 
 
 def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> tuple[float, float, float]:
@@ -76,7 +80,7 @@ def average_quality_auxiliary(
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ):
-    g = st.session_state.results
+    g = state_locator.provide_results()
     df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
     _trajectories = trajectories + df['trajectory'].tolist()
@@ -101,4 +105,4 @@ def average_quality_auxiliary(
     if absence_count > 0:
         absence_detection /= absence_count
 
-    st.session_state.cache['average_quality_auxiliary'].loc[(tracker, dataset), :] = [not_reported_error / count, drift_rate_error / count, absence_detection]
+    state_locator.provide_cache()['average_quality_auxiliary'].loc[(tracker, dataset), :] = [not_reported_error / count, drift_rate_error / count, absence_detection]

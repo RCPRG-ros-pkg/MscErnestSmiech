@@ -4,6 +4,9 @@ import streamlit as st
 from shapely import Polygon
 
 from analysis.utils import calculate_overlaps
+from data.state_locator import StateLocator
+
+state_locator = StateLocator()
 
 
 def gather_overlaps( # jakość - default, dokładność - custom
@@ -48,7 +51,7 @@ def average_success_plot(
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ):
-    g = st.session_state.results
+    g = state_locator.provide_results()
     df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
     _trajectories = trajectories + df['trajectory'].tolist()
@@ -66,12 +69,12 @@ def average_success_plot(
 
     axis_y /= count
 
-    df = st.session_state.cache['average_success_plot']
+    df = state_locator.provide_cache()['average_success_plot']
     try:
         df.drop(df[(df['Tracker'] == tracker) & (df['Dataset'] == dataset)].index, inplace=True)
     except KeyError:
         pass
-    st.session_state.cache['average_success_plot'] = pandas.concat([
+    state_locator.provide_cache()['average_success_plot'] = pandas.concat([
         df,
         pandas.DataFrame({
             'Tracker': [tracker] * len(axis_x),
@@ -98,7 +101,7 @@ def average_accuracy(
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ):
-    g = st.session_state.results
+    g = state_locator.provide_results()
     df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
     _trajectories = trajectories + df['trajectory'].tolist()
@@ -111,4 +114,4 @@ def average_accuracy(
         accuracy += sequence_accuracy(trajectory, groundtruth)
         count += 1
 
-    st.session_state.cache['average_accuracy'].loc[(tracker, dataset), :] = accuracy / count
+    state_locator.provide_cache()['average_accuracy'].loc[(tracker, dataset), :] = accuracy / count
