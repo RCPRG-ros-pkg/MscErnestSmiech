@@ -1,5 +1,4 @@
 import numpy
-import pandas
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
@@ -9,6 +8,7 @@ from analysis.longterm import accuracy_robustness, average_quality_auxiliary
 from analysis.stt_iou import average_stt_iou
 from analysis.time import average_time_quality_auxiliary, average_time
 from data.state_locator import StateLocator
+from data.viewmodel_home import HomeViewModel
 from stack import datasets, tests_dir
 from utils.tracker_test import get_ground_truth_positions
 from utils.utils import save_results
@@ -16,6 +16,7 @@ from utils.utils import save_results
 
 class TestsPage:
     state_locator = StateLocator()
+    view_model = HomeViewModel()
 
     submitted = False
     sequence = ""
@@ -44,126 +45,86 @@ class TestsPage:
 
     def sidebar(self) -> None:
         with st.sidebar.form("Options"):
-            tracker = st.selectbox('Trackers', [tracker.name for tracker in self.state_locator.provide_trackers()])
+            tracker = st.selectbox('Trackers', self.view_model.tracker_names)
             selected_dataset = st.selectbox("Datasets", datasets.keys())
 
             self.submitted = st.form_submit_button("Submit", use_container_width=True, type="primary")
 
-            if self.submitted:
-                self.state_locator.provide_selection().append((tracker, selected_dataset))
-                self.state_locator.provide_table_selected_trackers().loc[(tracker, selected_dataset), :] = True
+        if self.submitted: # todo
+            self.state_locator.provide_selection().append((tracker, selected_dataset))
+            self.state_locator.provide_table_selected_trackers().loc[(tracker, selected_dataset), :] = True
 
     def draw_iou_scores(self):
         iou_quality, iou_ar = st.columns(2)
 
-        selected = self.state_locator.provide_table_selected_trackers()
-        selected = selected.loc[selected['Selected'] == True]
-        if selected.empty:
-            return
-        ts = self.state_locator.provide_cache()['average_success_plot']
-        ts = ts.set_index(['Tracker', 'Dataset'])
-        ts = ts.loc[selected.index]
-        ts = ts.reset_index()
-        ts['TrackerDataset'] = ts[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
-        if len(ts) > 0:
+        ts = self.view_model.get_quality_plot()
+        if ts is not None and len(ts) > 0:
             iou_quality.text("Quality plot")
             iou_quality.line_chart(ts, x='Threshold', y='Success', color='TrackerDataset', height=300)
 
-        ra = self.state_locator.provide_cache()['accuracy_robustness']
-        ra = ra.loc[selected.index]
-        ra = ra.reset_index()
-        ra['TrackerDataset'] = ra[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
-        if len(ra) > 0:
+        ra = self.view_model.get_ar_plot()
+        if ra is not None and len(ra) > 0:
             iou_ar.text("AR plot")
             iou_ar.scatter_chart(ra, x='Robustness', y='Accuracy', color='TrackerDataset', height=300)
 
-    def on_iou_table_change(self, df_tracker_dataset): # fixme something wrong with selecting
-        if 'show_iou_trackers' in st.session_state:
-            edited = st.session_state.show_iou_trackers['edited_rows']
-
-            for i in edited:
-                self.state_locator.provide_table_selected_trackers().loc[*df_tracker_dataset.iloc[i].tolist()] = edited[i]['Selected']
-
     def draw_iou_table(self):
-        ts = self.state_locator.provide_cache()['average_success_plot']
-        ra = self.state_locator.provide_cache()['accuracy_robustness']
-        qa = self.state_locator.provide_cache()['average_quality_auxiliary']
-        ac = self.state_locator.provide_cache()['average_accuracy']
-        stt = self.state_locator.provide_cache()['average_stt_iou']
+        df = self.view_model.get_iou_table()
 
-        if len(ts) <= 0 or len(ra) <= 0 or len(qa) <= 0 or len(ac) <= 0:
-            return
-
-        # todo performance
-        success = ts.groupby(['Tracker', 'Dataset']).apply(lambda x: x['Success'].tolist())
-
-        df = pandas.concat(
-            [stt, ac, ra, qa, success, self.state_locator.provide_table_selected_trackers()],
-            axis=1,
-        ).rename(columns={0: 'success'}).reset_index()
-
-        st.data_editor(
-            df,
-            column_config={
-                "tracker": "Tracker",
-                "dataset": "Dataset",
-                "stt_iou": "STT-IOU",
-                "quality": "Quality",
-                "accuracy": "Accuracy",
-                "robustness": "Robustness",
-                "nre": "NRE",
-                "dre": "DRE",
-                "ad": "AD",
-                "success": st.column_config.LineChartColumn(
-                    "Success", y_min=0.0, y_max=1.0, width='small'
-                ),
-                "selected": st.column_config.CheckboxColumn(
-                    "Selected",
-                    help="Select tracker to display in charts",
-                    default=True,
-                ),
-            },
-            disabled=['tracker', "dataset", "robustness", "accuracy", "success", 'nre', 'dre', 'ad', 'quality', "stt_iou"],
-            on_change=self.on_iou_table_change,
-            use_container_width=True,
-            key='show_iou_trackers',
-            column_order=["Tracker", "Dataset", "STT-IOU", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD', "success", "Selected"],
-            hide_index=True,
-            args=[df[['Tracker', 'Dataset']]]
-        )
+        if df is not None:
+            st.data_editor(
+                df,
+                column_config={
+                    "tracker": "Tracker",
+                    "dataset": "Dataset",
+                    "stt_iou": "STT-IOU",
+                    "quality": "Quality",
+                    "accuracy": "Accuracy",
+                    "robustness": "Robustness",
+                    "nre": "NRE",
+                    "dre": "DRE",
+                    "ad": "AD",
+                    "success": st.column_config.LineChartColumn(
+                        "Success", y_min=0.0, y_max=1.0, width='small'
+                    ),
+                    "selected": st.column_config.CheckboxColumn(
+                        "Selected",
+                        help="Select tracker to display in charts",
+                        default=True,
+                    ),
+                },
+                disabled=['tracker', "dataset", "robustness", "accuracy", "success", 'nre', 'dre', 'ad', 'quality', "stt_iou"],
+                on_change=self.view_model.on_iou_table_change,
+                use_container_width=True,
+                key='show_iou_trackers',
+                column_order=["Tracker", "Dataset", "STT-IOU", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD', "success", "Selected"],
+                hide_index=True,
+                args=[df[['Tracker', 'Dataset']]]
+            )
 
     def draw_time_table(self):
-        qa = self.state_locator.provide_cache()['average_time_quality_auxiliary']
-        ac = self.state_locator.provide_cache()['average_time']
+        df = self.view_model.get_time_table()
 
-        if len(qa) <= 0 or len(ac) <= 0:
-            return
+        if df is not None:
+            st.data_editor(
+                df,
+                column_config={
+                    "tracker": "Tracker",
+                    "dataset": "Dataset",
+                    "quality": "Quality",
+                    "accuracy": "Accuracy",
+                    "robustness": "Robustness",
+                    "nre": "NRE",
+                    "dre": "DRE",
+                    "ad": "AD"
+                },
+                disabled=['tracker', "dataset", "robustness", 'nre', 'dre', 'ad', 'quality', 'accuracy'],
+                use_container_width=True,
+                key='show_time_trackers',
+                column_order=["Tracker", "Dataset", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD'],
+                hide_index=True
+            )
 
-        df = pandas.concat(
-            [ac, qa, self.state_locator.provide_table_selected_trackers()],
-            axis=1,
-        ).reset_index()
-
-        st.data_editor(
-            df,
-            column_config={
-                "tracker": "Tracker",
-                "dataset": "Dataset",
-                "quality": "Quality",
-                "accuracy": "Accuracy",
-                "robustness": "Robustness",
-                "nre": "NRE",
-                "dre": "DRE",
-                "ad": "AD"
-            },
-            disabled=['tracker', "dataset", "robustness", 'nre', 'dre', 'ad', 'quality', 'accuracy'],
-            use_container_width=True,
-            key='show_time_trackers',
-            column_order=["Tracker", "Dataset", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD'],
-            hide_index=True
-        )
-
-    def handle_submitted(self) -> None:
+    def handle_submitted(self) -> None: # todo popraw zapisywanie - powinno być bez stanowe. Następnie spróbuj ogarnąć ten handle
         if self.submitted:
             # tracker, dataset
             for _selection in self.state_locator.provide_selection():
