@@ -1,13 +1,8 @@
 import numpy
-import streamlit as st
 from shapely import Polygon
 
 from analysis.accuracy import sequence_accuracy
 from analysis.utils import calculate_overlaps
-from data.state_locator import StateLocator
-
-
-state_locator = StateLocator()
 
 
 def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
@@ -34,30 +29,19 @@ def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
     return T, F, M, H, N
 
 
-def accuracy_robustness(
-        tracker: str,
-        dataset: str,
-        trajectories: list[list[Polygon | None]],
-        groundtruths: list[list[Polygon]]
-):
-    g = state_locator.provide_results()
-    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
-
-    _trajectories = trajectories + df['trajectory'].tolist()
-    _groundtruths = groundtruths + df['groundtruth'].tolist()
-
+def accuracy_robustness(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
     accuracy = 0
     robustness = 0
     count = 0
 
-    for trajectory, groundtruth in zip(_trajectories, _groundtruths):
+    for trajectory, groundtruth in zip(trajectories, groundtruths):
         accuracy += sequence_accuracy(trajectory, groundtruth, True, 0.0)
         T, F, M, _, _ = count_frames(trajectory, groundtruth)
 
         robustness += T / (T + F + M)
         count += 1
 
-    state_locator.provide_cache()['accuracy_robustness'].loc[(tracker, dataset), :] = [robustness / count, accuracy / count]
+    return [robustness / count, accuracy / count]
 
 
 def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> tuple[float, float, float]:
@@ -74,25 +58,14 @@ def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygo
     return not_reported_error, drift_rate_error, absence_detection
 
 
-def average_quality_auxiliary(
-        tracker: str,
-        dataset: str,
-        trajectories: list[list[Polygon | None]],
-        groundtruths: list[list[Polygon]]
-):
-    g = state_locator.provide_results()
-    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
-
-    _trajectories = trajectories + df['trajectory'].tolist()
-    _groundtruths = groundtruths + df['groundtruth'].tolist()
-
+def average_quality_auxiliary(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
     not_reported_error = 0
     drift_rate_error = 0
     absence_detection = 0
     absence_count = 0
     count = 0
 
-    for trajectory, groundtruth in zip(_trajectories, _groundtruths):
+    for trajectory, groundtruth in zip(trajectories, groundtruths):
         nre, dre, ad = quality_auxiliary(trajectory, groundtruth)
         not_reported_error += nre
         drift_rate_error += dre
@@ -105,4 +78,4 @@ def average_quality_auxiliary(
     if absence_count > 0:
         absence_detection /= absence_count
 
-    state_locator.provide_cache()['average_quality_auxiliary'].loc[(tracker, dataset), :] = [not_reported_error / count, drift_rate_error / count, absence_detection]
+    return [not_reported_error / count, drift_rate_error / count, absence_detection]

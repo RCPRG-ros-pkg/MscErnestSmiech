@@ -1,15 +1,10 @@
 import json
 
 import pandas
-import streamlit as st
 from shapely import Polygon
 
 from analysis.utils import create_polygon
-from data.state_locator import StateLocator
 from stack import results_file
-
-
-state_locator = StateLocator()
 
 
 def stt_iou(_tr: list[Polygon], _gt: list[Polygon]) -> float:
@@ -30,29 +25,18 @@ def stt_iou(_tr: list[Polygon], _gt: list[Polygon]) -> float:
     return intersect / union
 
 
-def average_stt_iou(
-        tracker: str,
-        dataset: str,
-        trajectories: list[list[Polygon | None]],
-        groundtruths: list[list[Polygon]]):
-    g = state_locator.provide_results()
-    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
-
-    _trajectories = trajectories + df['trajectory'].tolist()
-    _groundtruths = groundtruths + df['groundtruth'].tolist()
-
+def average_stt_iou(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
     cumulative = 0
     count = 0
 
-    for trajectory, groundtruth in zip(_trajectories, _groundtruths):
+    for trajectory, groundtruth in zip(trajectories, groundtruths):
         try:
             cumulative += stt_iou(trajectory, groundtruth)
         except Exception as e:
-            print(e)
             continue
         count += 1
 
-    state_locator.provide_cache()['average_stt_iou'].loc[(tracker, dataset), :] = cumulative / count
+    return cumulative / count
 
 
 if __name__ == '__main__':
@@ -63,8 +47,3 @@ if __name__ == '__main__':
     results.groundtruth = [[create_polygon(points) if points != [] else None for points in groundtruth] for groundtruth in groundtruths]
 
     df = results.loc[(results['tracker'] == 'TLD') & (results['dataset'] == 'VOT Basic Test Stack') & (results['sequence'] == 'surfing'), ['trajectory', 'groundtruth']]
-
-    print(stt_iou(
-        df['trajectory'].tolist()[0],
-        df['groundtruth'].tolist()[0]
-    ))

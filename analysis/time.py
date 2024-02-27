@@ -1,11 +1,7 @@
 import numpy
-import streamlit as st
 from shapely import Polygon
 
 from analysis.utils import calculate_overlaps
-from data.state_locator import StateLocator
-
-state_locator = StateLocator()
 
 
 def gather_time_in_overlaps(
@@ -49,27 +45,18 @@ def sequence_time(
 
 
 def average_time(
-        tracker: str,
-        dataset: str,
         times: list[list[int]],
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ):
-    g = state_locator.provide_results()
-    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth', 'times']]
-
-    _times = times + df['times'].tolist()
-    _trajectories = trajectories + df['trajectory'].tolist()
-    _groundtruths = groundtruths + df['groundtruth'].tolist()
-
     quality = 0
     count = 0
 
-    for time, trajectory, groundtruth in zip(_times, _trajectories, _groundtruths):
+    for time, trajectory, groundtruth in zip(times, trajectories, groundtruths):
         quality += sequence_time(time, trajectory, groundtruth)
         count += 1
 
-    state_locator.provide_cache()['average_time'].loc[(tracker, dataset), :] = quality / count
+    return quality / count
 
 
 def count_time_frames(
@@ -129,21 +116,10 @@ def time_quality_auxiliary(
 
 
 def average_time_quality_auxiliary(
-        tracker: str,
-        dataset: str,
         times: list[list[int]],
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ):
-    g = state_locator.provide_results()
-    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth', 'times']]
-    print(g)
-    print(df)
-
-    _times = times + df['times'].tolist()
-    _trajectories = trajectories + df['trajectory'].tolist()
-    _groundtruths = groundtruths + df['groundtruth'].tolist()
-
     not_reported_error = 0
     drift_rate_error = 0
     absence_detection = 0
@@ -151,7 +127,7 @@ def average_time_quality_auxiliary(
     robustness = 0
     count = 0
 
-    for time, trajectory, groundtruth in zip(_times, _trajectories, _groundtruths):
+    for time, trajectory, groundtruth in zip(times, trajectories, groundtruths):
         r, nre, dre, ad = time_quality_auxiliary(time, trajectory, groundtruth)
         not_reported_error += nre
         drift_rate_error += dre
@@ -165,4 +141,4 @@ def average_time_quality_auxiliary(
     if absence_count > 0:
         absence_detection /= absence_count
 
-    state_locator.provide_cache()['average_time_quality_auxiliary'].loc[(tracker, dataset), :] = [robustness / count, not_reported_error / count, drift_rate_error / count, absence_detection]
+    return [robustness / count, not_reported_error / count, drift_rate_error / count, absence_detection]

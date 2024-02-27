@@ -195,4 +195,3 @@ def get_concrete_classes(cls):
 if __name__ == '__main__':
     for _tracker in get_concrete_classes(Tracker):
         tracker = _tracker()
-        print(tracker.test('./raw/tests/vot2022stb/sequences/motocross1', True))

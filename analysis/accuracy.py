@@ -1,12 +1,7 @@
 import numpy
-import pandas
-import streamlit as st
 from shapely import Polygon
 
 from analysis.utils import calculate_overlaps
-from data.state_locator import StateLocator
-
-state_locator = StateLocator()
 
 
 def gather_overlaps( # jakość - default, dokładność - custom
@@ -45,23 +40,12 @@ def success_plot(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -
     return [(x, y) for x, y in zip(axis_x, axis_y)]
 
 
-def average_success_plot(
-        tracker: str,
-        dataset: str,
-        trajectories: list[list[Polygon | None]],
-        groundtruths: list[list[Polygon]]
-):
-    g = state_locator.provide_results()
-    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
-
-    _trajectories = trajectories + df['trajectory'].tolist()
-    _groundtruths = groundtruths + df['groundtruth'].tolist()
-
+def average_success_plot(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
     axis_x = numpy.linspace(0, 1, 100)
     axis_y = numpy.zeros_like(axis_x)
     count = 0
 
-    for trajectory, groundtruth in zip(_trajectories, _groundtruths):
+    for trajectory, groundtruth in zip(trajectories, groundtruths):
         for j, (_, y) in enumerate(success_plot(trajectory, groundtruth)):
             axis_y[j] += y
 
@@ -69,20 +53,7 @@ def average_success_plot(
 
     axis_y /= count
 
-    df = state_locator.provide_cache()['average_success_plot']
-    try:
-        df.drop(df[(df['Tracker'] == tracker) & (df['Dataset'] == dataset)].index, inplace=True)
-    except KeyError:
-        pass
-    state_locator.provide_cache()['average_success_plot'] = pandas.concat([
-        df,
-        pandas.DataFrame({
-            'Tracker': [tracker] * len(axis_x),
-            'Dataset': [dataset] * len(axis_x),
-            'Threshold': axis_x,
-            'Success': axis_y
-        })
-    ], ignore_index=True)
+    return axis_x, axis_y
 
 
 def sequence_accuracy(trajectory: list[Polygon | None], groundtruth: list[Polygon], ignore_invisible: bool = False, threshold: float = -1) -> float:
@@ -95,23 +66,12 @@ def sequence_accuracy(trajectory: list[Polygon | None], groundtruth: list[Polygo
     return cummulative
 
 
-def average_accuracy(
-        tracker: str,
-        dataset: str,
-        trajectories: list[list[Polygon | None]],
-        groundtruths: list[list[Polygon]]
-):
-    g = state_locator.provide_results()
-    df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
-
-    _trajectories = trajectories + df['trajectory'].tolist()
-    _groundtruths = groundtruths + df['groundtruth'].tolist()
-
+def average_accuracy(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
     accuracy = 0
     count = 0
 
-    for trajectory, groundtruth in zip(_trajectories, _groundtruths):
+    for trajectory, groundtruth in zip(trajectories, groundtruths):
         accuracy += sequence_accuracy(trajectory, groundtruth)
         count += 1
 
-    state_locator.provide_cache()['average_accuracy'].loc[(tracker, dataset), :] = accuracy / count
+    return accuracy / count

@@ -1,6 +1,11 @@
 import pandas
 import streamlit as st
+from shapely import Polygon
 
+from analysis.accuracy import average_accuracy, average_success_plot
+from analysis.longterm import accuracy_robustness, average_quality_auxiliary
+from analysis.stt_iou import average_stt_iou
+from analysis.time import average_time_quality_auxiliary, average_time
 from data.singleton_meta import SingletonMeta
 from data.state_locator import StateLocator
 
@@ -80,3 +85,138 @@ class HomeViewModel(metaclass=SingletonMeta):
         ).reset_index()
 
         return df
+
+    def accuracy_robustness(
+            self,
+            tracker: str,
+            dataset: str,
+            trajectories: list[list[Polygon | None]],
+            groundtruths: list[list[Polygon]]
+    ):
+        g = self.state_locator.provide_results()
+        df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
+
+        _trajectories = trajectories + df['trajectory'].tolist()
+        _groundtruths = groundtruths + df['groundtruth'].tolist()
+
+        value = accuracy_robustness(_trajectories, _groundtruths)
+
+        self.state_locator.provide_cache()['accuracy_robustness'].loc[(tracker, dataset), :] = value
+
+    def average_quality_auxiliary(
+            self,
+            tracker: str,
+            dataset: str,
+            trajectories: list[list[Polygon | None]],
+            groundtruths: list[list[Polygon]]
+    ):
+        g = self.state_locator.provide_results()
+        df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
+
+        _trajectories = trajectories + df['trajectory'].tolist()
+        _groundtruths = groundtruths + df['groundtruth'].tolist()
+
+        value = average_quality_auxiliary(_trajectories, _groundtruths)
+
+        self.state_locator.provide_cache()['average_quality_auxiliary'].loc[(tracker, dataset), :] = value
+
+    def average_accuracy(
+            self,
+            tracker: str,
+            dataset: str,
+            trajectories: list[list[Polygon | None]],
+            groundtruths: list[list[Polygon]]
+    ):
+        g = self.state_locator.provide_results()
+        df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
+
+        _trajectories = trajectories + df['trajectory'].tolist()
+        _groundtruths = groundtruths + df['groundtruth'].tolist()
+
+        value = average_accuracy(_trajectories, _groundtruths)
+
+        self.state_locator.provide_cache()['average_accuracy'].loc[(tracker, dataset), :] = value
+
+    def average_success_plot(
+            self,
+            tracker: str,
+            dataset: str,
+            trajectories: list[list[Polygon | None]],
+            groundtruths: list[list[Polygon]]
+    ):
+        g = self.state_locator.provide_results()
+        df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
+
+        _trajectories = trajectories + df['trajectory'].tolist()
+        _groundtruths = groundtruths + df['groundtruth'].tolist()
+
+        axis_x, axis_y = average_success_plot(_trajectories, _groundtruths)
+
+        df = self.state_locator.provide_cache()['average_success_plot']
+        try:
+            df.drop(df[(df['Tracker'] == tracker) & (df['Dataset'] == dataset)].index, inplace=True)
+        except KeyError:
+            pass
+        self.state_locator.provide_cache()['average_success_plot'] = pandas.concat([
+            df,
+            pandas.DataFrame({
+                'Tracker': [tracker] * len(axis_x),
+                'Dataset': [dataset] * len(axis_x),
+                'Threshold': axis_x,
+                'Success': axis_y
+            })
+        ], ignore_index=True)
+
+    def average_stt_iou(
+            self,
+            tracker: str,
+            dataset: str,
+            trajectories: list[list[Polygon | None]],
+            groundtruths: list[list[Polygon]]):
+        g = self.state_locator.provide_results()
+        df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
+
+        _trajectories = trajectories + df['trajectory'].tolist()
+        _groundtruths = groundtruths + df['groundtruth'].tolist()
+
+        value = average_stt_iou(_trajectories, _groundtruths)
+
+        self.state_locator.provide_cache()['average_stt_iou'].loc[(tracker, dataset), :] = value
+
+    def average_time_quality_auxiliary(
+            self,
+            tracker: str,
+            dataset: str,
+            times: list[list[int]],
+            trajectories: list[list[Polygon | None]],
+            groundtruths: list[list[Polygon]]
+    ):
+        g = self.state_locator.provide_results()
+        df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth', 'times']]
+
+        _times = times + df['times'].tolist()
+        _trajectories = trajectories + df['trajectory'].tolist()
+        _groundtruths = groundtruths + df['groundtruth'].tolist()
+
+        value = average_time_quality_auxiliary(_times, _trajectories, _groundtruths)
+
+        self.state_locator.provide_cache()['average_time_quality_auxiliary'].loc[(tracker, dataset), :] = value
+
+    def average_time(
+            self,
+            tracker: str,
+            dataset: str,
+            times: list[list[int]],
+            trajectories: list[list[Polygon | None]],
+            groundtruths: list[list[Polygon]]
+    ):
+        g = self.state_locator.provide_results()
+        df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth', 'times']]
+
+        _times = times + df['times'].tolist()
+        _trajectories = trajectories + df['trajectory'].tolist()
+        _groundtruths = groundtruths + df['groundtruth'].tolist()
+
+        value = average_time(_times, _trajectories, _groundtruths)
+
+        self.state_locator.provide_cache()['average_time'].loc[(tracker, dataset), :] = value
