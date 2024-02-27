@@ -1,3 +1,6 @@
+from typing import Callable
+
+import numpy
 import pandas
 import streamlit as st
 from shapely import Polygon
@@ -10,7 +13,9 @@ from analysis.utils import polygon_to_floatarray
 from data.data_locator import DataLocator
 from data.singleton_meta import SingletonMeta
 from data.state_locator import StateLocator
-from stack import cache_dir, results_file
+from stack import cache_dir, results_file, tests_dir, datasets
+from tracker import Tracker
+from utils.tracker_test import get_ground_truth_positions
 
 
 class HomeViewModel(metaclass=SingletonMeta):
@@ -267,3 +272,47 @@ class HomeViewModel(metaclass=SingletonMeta):
         })
     
         df.to_csv(results_file, mode='a', header=False, index=False)
+
+    def handle_submitted(
+            self,
+            handle_all_examples_bar: Callable[[int, [str]], None],
+            handle_current_example_bar: Callable[[int, int, str], None],
+            handle_current_frame_image: Callable[[numpy.ndarray], None]
+    ) -> None:
+        # tracker, dataset
+        for _selection in self.state_locator.provide_selection():
+            sequences = []
+            dates = []
+            with open(f'{tests_dir}/{datasets[_selection[1]]}/sequences/list.txt') as f:
+                for line in f.readlines():
+                    sequences.append(line.strip())
+
+            trajectories = []
+            groundtruths = []
+            detection_times = []
+            for index, sequence in enumerate(sequences):
+                handle_all_examples_bar(index, sequences)
+                _tracker: Tracker = next(x for x in self.state_locator.provide_trackers() if x.name == _selection[0])
+                date, detection_time, trajectory = _tracker.test(
+                    f'{tests_dir}/{datasets[_selection[1]]}/sequences/{sequence}',
+                    listener=lambda total_frame, current_frame: handle_current_example_bar(total_frame, current_frame, sequence),
+                    frame_listener=handle_current_frame_image,
+                    iou_threshold_for_correction=-1
+                )
+                dates.append(date)
+                detection_times.append(detection_time)
+                trajectories.append(trajectory)
+                # [1:] because first frame is consumed for init of tracker
+                groundtruths.append(
+                    get_ground_truth_positions(f"{tests_dir}/{datasets[_selection[1]]}/sequences/{sequence}/groundtruth.txt")[1:]
+                )
+
+            self.accuracy_robustness(_selection[0], _selection[1], trajectories, groundtruths)
+            self.average_quality_auxiliary(_selection[0], _selection[1], trajectories, groundtruths)
+            self.average_accuracy(_selection[0], _selection[1], trajectories, groundtruths)
+            self.average_success_plot(_selection[0], _selection[1], trajectories, groundtruths)
+            self.average_stt_iou(_selection[0], _selection[1], trajectories, groundtruths)
+            self.average_time_quality_auxiliary(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
+            self.average_time(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
+            self.save_results(dates, _selection[0], _selection[1], sequences, detection_times, trajectories, groundtruths)
+        self.state_locator.clear_selection()

@@ -42,7 +42,7 @@ def init_video_capture(_file_name: str):
     return _cap, _frame
 
 
-def get_ground_truth_positions(_file_name: str) -> List[Polygon]:
+def get_ground_truth_positions(_file_name: str) -> List[Polygon]: # todo move to util
     with open(_file_name) as csvfile:
         # _ground_truth_pos = [[int(x) for x in y] for y in csv.reader(csvfile, delimiter='\t')]
         _ground_truth_pos = [create_polygon([abs(int(float(x))) for x in y]) for y in csv.reader(csvfile)]
