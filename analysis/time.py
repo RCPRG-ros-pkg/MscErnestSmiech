@@ -48,7 +48,7 @@ def average_time(
         times: list[list[int]],
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
-):
+) -> float:
     quality = 0
     count = 0
 
@@ -119,7 +119,7 @@ def average_time_quality_auxiliary(
         times: list[list[int]],
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
-):
+) -> [float, float, float, float]:
     not_reported_error = 0
     drift_rate_error = 0
     absence_detection = 0

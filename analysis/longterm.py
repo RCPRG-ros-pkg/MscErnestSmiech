@@ -29,7 +29,7 @@ def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
     return T, F, M, H, N
 
 
-def accuracy_robustness(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
+def accuracy_robustness(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> [float, float]:
     accuracy = 0
     robustness = 0
     count = 0
@@ -58,7 +58,7 @@ def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygo
     return not_reported_error, drift_rate_error, absence_detection
 
 
-def average_quality_auxiliary(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
+def average_quality_auxiliary(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> [float, float, float]:
     not_reported_error = 0
     drift_rate_error = 0
     absence_detection = 0

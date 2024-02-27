@@ -25,7 +25,7 @@ def stt_iou(_tr: list[Polygon], _gt: list[Polygon]) -> float:
     return intersect / union
 
 
-def average_stt_iou(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
+def average_stt_iou(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> float:
     cumulative = 0
     count = 0
 

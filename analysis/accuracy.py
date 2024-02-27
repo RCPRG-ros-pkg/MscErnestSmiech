@@ -40,7 +40,7 @@ def success_plot(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -
     return [(x, y) for x, y in zip(axis_x, axis_y)]
 
 
-def average_success_plot(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
+def average_success_plot(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> (numpy.ndarray, numpy.ndarray):
     axis_x = numpy.linspace(0, 1, 100)
     axis_y = numpy.zeros_like(axis_x)
     count = 0
@@ -66,7 +66,7 @@ def sequence_accuracy(trajectory: list[Polygon | None], groundtruth: list[Polygo
     return cummulative
 
 
-def average_accuracy(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]):
+def average_accuracy(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> float:
     accuracy = 0
     count = 0
 
