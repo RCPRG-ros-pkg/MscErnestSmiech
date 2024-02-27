@@ -6,13 +6,17 @@ from analysis.accuracy import average_accuracy, average_success_plot
 from analysis.longterm import accuracy_robustness, average_quality_auxiliary
 from analysis.stt_iou import average_stt_iou
 from analysis.time import average_time_quality_auxiliary, average_time
+from analysis.utils import polygon_to_floatarray
+from data.data_locator import DataLocator
 from data.singleton_meta import SingletonMeta
 from data.state_locator import StateLocator
+from stack import cache_dir, results_file
 
 
 class HomeViewModel(metaclass=SingletonMeta):
 
     state_locator = StateLocator()
+    data_locator = DataLocator()
 
     tracker_names = [tracker.name for tracker in state_locator.provide_trackers()]
 
@@ -32,7 +36,7 @@ class HomeViewModel(metaclass=SingletonMeta):
         if selected.empty:
             return None
 
-        ts = self.state_locator.provide_cache()['average_success_plot']
+        ts = self.data_locator.provide_cache()['average_success_plot']
         ts = ts.set_index(['Tracker', 'Dataset'])
         ts = ts.loc[selected.index]
         ts = ts.reset_index()
@@ -45,7 +49,7 @@ class HomeViewModel(metaclass=SingletonMeta):
         if selected.empty:
             return None
 
-        ra = self.state_locator.provide_cache()['accuracy_robustness']
+        ra = self.data_locator.provide_cache()['accuracy_robustness']
         ra = ra.loc[selected.index]
         ra = ra.reset_index()
         ra['TrackerDataset'] = ra[['Tracker', 'Dataset']].agg(' - '.join, axis=1)
@@ -53,11 +57,11 @@ class HomeViewModel(metaclass=SingletonMeta):
         return ra
 
     def get_iou_table(self) -> None | pandas.DataFrame:
-        ts = self.state_locator.provide_cache()['average_success_plot']
-        ra = self.state_locator.provide_cache()['accuracy_robustness']
-        qa = self.state_locator.provide_cache()['average_quality_auxiliary']
-        ac = self.state_locator.provide_cache()['average_accuracy']
-        stt = self.state_locator.provide_cache()['average_stt_iou']
+        ts = self.data_locator.provide_cache()['average_success_plot']
+        ra = self.data_locator.provide_cache()['accuracy_robustness']
+        qa = self.data_locator.provide_cache()['average_quality_auxiliary']
+        ac = self.data_locator.provide_cache()['average_accuracy']
+        stt = self.data_locator.provide_cache()['average_stt_iou']
 
         if len(ts) <= 0 or len(ra) <= 0 or len(qa) <= 0 or len(ac) <= 0:
             return None
@@ -73,8 +77,8 @@ class HomeViewModel(metaclass=SingletonMeta):
         return df
 
     def get_time_table(self) -> None | pandas.DataFrame:
-        qa = self.state_locator.provide_cache()['average_time_quality_auxiliary']
-        ac = self.state_locator.provide_cache()['average_time']
+        qa = self.data_locator.provide_cache()['average_time_quality_auxiliary']
+        ac = self.data_locator.provide_cache()['average_time']
 
         if len(qa) <= 0 or len(ac) <= 0:
             return None
@@ -93,7 +97,7 @@ class HomeViewModel(metaclass=SingletonMeta):
             trajectories: list[list[Polygon | None]],
             groundtruths: list[list[Polygon]]
     ):
-        g = self.state_locator.provide_results()
+        g = self.data_locator.provide_results()
         df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
         _trajectories = trajectories + df['trajectory'].tolist()
@@ -101,7 +105,7 @@ class HomeViewModel(metaclass=SingletonMeta):
 
         value = accuracy_robustness(_trajectories, _groundtruths)
 
-        self.state_locator.provide_cache()['accuracy_robustness'].loc[(tracker, dataset), :] = value
+        self.data_locator.provide_cache()['accuracy_robustness'].loc[(tracker, dataset), :] = value
 
     def average_quality_auxiliary(
             self,
@@ -110,7 +114,7 @@ class HomeViewModel(metaclass=SingletonMeta):
             trajectories: list[list[Polygon | None]],
             groundtruths: list[list[Polygon]]
     ):
-        g = self.state_locator.provide_results()
+        g = self.data_locator.provide_results()
         df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
         _trajectories = trajectories + df['trajectory'].tolist()
@@ -118,7 +122,7 @@ class HomeViewModel(metaclass=SingletonMeta):
 
         value = average_quality_auxiliary(_trajectories, _groundtruths)
 
-        self.state_locator.provide_cache()['average_quality_auxiliary'].loc[(tracker, dataset), :] = value
+        self.data_locator.provide_cache()['average_quality_auxiliary'].loc[(tracker, dataset), :] = value
 
     def average_accuracy(
             self,
@@ -127,7 +131,7 @@ class HomeViewModel(metaclass=SingletonMeta):
             trajectories: list[list[Polygon | None]],
             groundtruths: list[list[Polygon]]
     ):
-        g = self.state_locator.provide_results()
+        g = self.data_locator.provide_results()
         df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
         _trajectories = trajectories + df['trajectory'].tolist()
@@ -135,7 +139,7 @@ class HomeViewModel(metaclass=SingletonMeta):
 
         value = average_accuracy(_trajectories, _groundtruths)
 
-        self.state_locator.provide_cache()['average_accuracy'].loc[(tracker, dataset), :] = value
+        self.data_locator.provide_cache()['average_accuracy'].loc[(tracker, dataset), :] = value
 
     def average_success_plot(
             self,
@@ -144,7 +148,7 @@ class HomeViewModel(metaclass=SingletonMeta):
             trajectories: list[list[Polygon | None]],
             groundtruths: list[list[Polygon]]
     ):
-        g = self.state_locator.provide_results()
+        g = self.data_locator.provide_results()
         df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
         _trajectories = trajectories + df['trajectory'].tolist()
@@ -152,12 +156,12 @@ class HomeViewModel(metaclass=SingletonMeta):
 
         axis_x, axis_y = average_success_plot(_trajectories, _groundtruths)
 
-        df = self.state_locator.provide_cache()['average_success_plot']
+        df = self.data_locator.provide_cache()['average_success_plot']
         try:
             df.drop(df[(df['Tracker'] == tracker) & (df['Dataset'] == dataset)].index, inplace=True)
         except KeyError:
             pass
-        self.state_locator.provide_cache()['average_success_plot'] = pandas.concat([
+        self.data_locator.provide_cache()['average_success_plot'] = pandas.concat([
             df,
             pandas.DataFrame({
                 'Tracker': [tracker] * len(axis_x),
@@ -173,7 +177,7 @@ class HomeViewModel(metaclass=SingletonMeta):
             dataset: str,
             trajectories: list[list[Polygon | None]],
             groundtruths: list[list[Polygon]]):
-        g = self.state_locator.provide_results()
+        g = self.data_locator.provide_results()
         df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth']]
 
         _trajectories = trajectories + df['trajectory'].tolist()
@@ -181,7 +185,7 @@ class HomeViewModel(metaclass=SingletonMeta):
 
         value = average_stt_iou(_trajectories, _groundtruths)
 
-        self.state_locator.provide_cache()['average_stt_iou'].loc[(tracker, dataset), :] = value
+        self.data_locator.provide_cache()['average_stt_iou'].loc[(tracker, dataset), :] = value
 
     def average_time_quality_auxiliary(
             self,
@@ -191,7 +195,7 @@ class HomeViewModel(metaclass=SingletonMeta):
             trajectories: list[list[Polygon | None]],
             groundtruths: list[list[Polygon]]
     ):
-        g = self.state_locator.provide_results()
+        g = self.data_locator.provide_results()
         df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth', 'times']]
 
         _times = times + df['times'].tolist()
@@ -200,7 +204,7 @@ class HomeViewModel(metaclass=SingletonMeta):
 
         value = average_time_quality_auxiliary(_times, _trajectories, _groundtruths)
 
-        self.state_locator.provide_cache()['average_time_quality_auxiliary'].loc[(tracker, dataset), :] = value
+        self.data_locator.provide_cache()['average_time_quality_auxiliary'].loc[(tracker, dataset), :] = value
 
     def average_time(
             self,
@@ -210,7 +214,7 @@ class HomeViewModel(metaclass=SingletonMeta):
             trajectories: list[list[Polygon | None]],
             groundtruths: list[list[Polygon]]
     ):
-        g = self.state_locator.provide_results()
+        g = self.data_locator.provide_results()
         df = g.loc[(g['tracker'] == tracker) & (g['dataset'] == dataset), ['trajectory', 'groundtruth', 'times']]
 
         _times = times + df['times'].tolist()
@@ -219,4 +223,47 @@ class HomeViewModel(metaclass=SingletonMeta):
 
         value = average_time(_times, _trajectories, _groundtruths)
 
-        self.state_locator.provide_cache()['average_time'].loc[(tracker, dataset), :] = value
+        self.data_locator.provide_cache()['average_time'].loc[(tracker, dataset), :] = value
+
+    def save_results(
+            self,
+            date: list[str],
+            tracker: str,
+            dataset: str,
+            sequences: list[str],
+            times: list[list[int]],
+            trajectories: list[list[Polygon | None]],
+            groundtruths: list[list[Polygon]],
+    ):
+        df = pandas.DataFrame({
+            'date': date,
+            'tracker': tracker,
+            'dataset': dataset,
+            'sequence': sequences,
+            'selected': [False]*len(sequences),
+            'trajectory': trajectories,
+            'groundtruth': groundtruths,
+            'times': times
+        })
+
+        self.data_locator.concat_results(df)
+
+        self.data_locator.provide_cache()['average_accuracy'].to_csv(f"{cache_dir}/average_accuracy.csv")
+        self.data_locator.provide_cache()['average_stt_iou'].to_csv(f"{cache_dir}/average_stt_iou.csv")
+        self.data_locator.provide_cache()['average_time'].to_csv(f"{cache_dir}/average_time.csv")
+        self.data_locator.provide_cache()['average_success_plot'].to_csv(f"{cache_dir}/average_success_plot.csv", index=False)
+        self.data_locator.provide_cache()['average_quality_auxiliary'].to_csv(f"{cache_dir}/average_quality_auxiliary.csv")
+        self.data_locator.provide_cache()['average_time_quality_auxiliary'].to_csv(f"{cache_dir}/average_time_quality_auxiliary.csv")
+        self.data_locator.provide_cache()['accuracy_robustness'].to_csv(f"{cache_dir}/accuracy_robustness.csv")
+    
+        df = pandas.DataFrame({
+            'date': date,
+            'tracker': tracker,
+            'dataset': dataset,
+            'sequence': sequences,
+            'trajectory': [[[] if polygon is None else polygon_to_floatarray(polygon) for polygon in trajectory] for trajectory in trajectories],
+            'groundtruth': [[[] if polygon is None else polygon_to_floatarray(polygon) for polygon in groundtruth] for groundtruth in groundtruths],
+            'times': times
+        })
+    
+        df.to_csv(results_file, mode='a', header=False, index=False)

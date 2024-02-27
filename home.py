@@ -3,15 +3,10 @@ import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
 import tracker as tracker
-from analysis.accuracy import average_success_plot, average_accuracy
-from analysis.longterm import accuracy_robustness, average_quality_auxiliary
-from analysis.stt_iou import average_stt_iou
-from analysis.time import average_time_quality_auxiliary, average_time
 from data.state_locator import StateLocator
 from data.viewmodel_home import HomeViewModel
 from stack import datasets, tests_dir
 from utils.tracker_test import get_ground_truth_positions
-from utils.utils import save_results
 
 
 class TestsPage:
@@ -162,7 +157,7 @@ class TestsPage:
                 self.view_model.average_stt_iou(_selection[0], _selection[1], trajectories, groundtruths)
                 self.view_model.average_time_quality_auxiliary(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
                 self.view_model.average_time(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
-                save_results(dates, _selection[0], _selection[1], sequences, detection_times, trajectories, groundtruths)
+                self.view_model.save_results(dates, _selection[0], _selection[1], sequences, detection_times, trajectories, groundtruths)
             self.state_locator.clear_selection()
             self.all_examples_bar.empty()
             self.current_example_bar.empty()
