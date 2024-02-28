@@ -43,7 +43,7 @@ class StateLocator(metaclass=SingletonMeta):
     def _create_selection():
         st.session_state["selection"]: [(str, str)] = []
 
-    def provide_image_count(self):
+    def provide_image_count(self) -> int:
         if 'count' not in st.session_state:
             self._create_image_count()
 
