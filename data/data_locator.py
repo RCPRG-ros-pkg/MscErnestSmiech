@@ -37,6 +37,7 @@ class DataLocator(metaclass=SingletonMeta):
             _results.trajectory = [[create_polygon(points) if points != [] else None for points in trajectory] for trajectory in _results['trajectory'].map(json.loads)]
             _results.groundtruth = [[create_polygon(points) if points != [] else None for points in groundtruth] for groundtruth in _results['groundtruth'].map(json.loads)]
             _results.times = _results.times.map(json.loads)
+            _results.date = _results.date.map(lambda f: pandas.to_datetime(f, format='%Y-%m-%d-%H-%M-%S-%f'))
             _results['selected'] = False
             self._results = _results
 

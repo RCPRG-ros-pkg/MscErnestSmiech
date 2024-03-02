@@ -1,4 +1,5 @@
 import glob
+from datetime import datetime
 
 import numpy
 import pandas
@@ -61,13 +62,15 @@ class ErrorsViewModel(metaclass=SingletonMeta):
             trackers: numpy.ndarray,
             datasets: numpy.ndarray,
             sequences: numpy.ndarray,
-            dates: numpy.ndarray
+            start_date: datetime,
+            end_date: datetime,
     ):
+        foo = self.df['date'].unique()
         self._tracker_selection = {
             'tracker': trackers if trackers else self.df['tracker'].unique().tolist(),
             'dataset': datasets if datasets else self.df['dataset'].unique().tolist(),
             'sequence': sequences if sequences else self.df['sequence'].unique().tolist(),
-            'date': dates if dates else self.df['date'].unique().tolist(),
+            'date': foo[(foo > start_date) & (foo < end_date)],
         }
 
     def get_df_table(self):
@@ -181,4 +184,10 @@ class ErrorsViewModel(metaclass=SingletonMeta):
 
     def get_ar_plot(self):
         return self.get_iou_table()[['accuracy', 'robustness', 'date']]
+
+    def get_available_dates(self) -> numpy.ndarray[datetime.date]:
+        return self.df['date'].unique().map(lambda d: d.date()).unique()
+
+    def get_available_times(self) -> numpy.ndarray[datetime.time]:
+        return self.df['date'].unique().map(lambda d: d.time()).unique()
 

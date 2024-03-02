@@ -1,3 +1,7 @@
+from datetime import datetime, time
+
+import numpy
+import pandas
 import streamlit as st
 from streamlit.delta_generator import DeltaGenerator
 
@@ -5,7 +9,6 @@ from data.viewmodel_errors import ErrorsViewModel
 
 
 # todo przycisk clear
-# todo wybór przedziału czasu
 class ErrorsPage:
     errors_view_model = ErrorsViewModel()
 
@@ -165,10 +168,56 @@ class ErrorsPage:
             trackers = st.multiselect('Trackers', self.errors_view_model.df['tracker'].unique())
             datasets = st.multiselect("Datasets", self.errors_view_model.df['dataset'].unique())
             sequences = st.multiselect("Sequence", self.errors_view_model.df['sequence'].unique())
-            dates = st.multiselect("Date", self.errors_view_model.df['date'].unique())
+
+            available_dates = self.errors_view_model.get_available_dates()
+
+            if available_dates.size > 1:
+                start_date, end_date = self.sidebar_date_selector(available_dates)
+            else:
+                start_date, end_date = self.sidebar_time_selector(available_dates)
 
             if st.form_submit_button("Submit", use_container_width=True, type="primary"):
-                self.errors_view_model.set_tracker_selection(trackers, datasets, sequences, dates)
+                self.errors_view_model.set_tracker_selection(trackers, datasets, sequences, start_date, end_date)
+
+    def sidebar_time_selector(self, available_dates: numpy.ndarray[datetime.date]) -> (datetime, datetime):
+        available_times = self.errors_view_model.get_available_times()
+
+        times = st.select_slider(
+            label="Time",
+            options=available_times,
+            value=(available_times[0], available_times[-1]),
+            format_func=lambda d: d.strftime('%H:%M:%S')
+        )
+
+        start_date = datetime.combine(available_dates[0], times[0])
+        end_date = datetime.combine(available_dates[0], times[1])
+
+        return start_date, end_date
+
+    @staticmethod
+    def sidebar_date_selector(available_dates: numpy.ndarray[datetime.date]) -> (datetime, datetime):
+        dates = st.select_slider(
+            label="Date",
+            options=available_dates,
+            value=(available_dates[0], available_dates[-1]),
+            format_func=lambda d: d.strftime('%d %b %Y')
+        )
+        start_time = st.slider(
+            label="Start time",
+            min_value=time(0, 0, 0),
+            max_value=time(23, 59, 59)
+        )
+        end_time = st.slider(
+            label="End time",
+            min_value=time(0, 0, 0),
+            max_value=time(23, 59, 59),
+            value=time(23, 59, 59)
+        )
+
+        start_date = datetime.combine(dates[0], start_time)
+        end_date = datetime.combine(dates[1], end_time)
+
+        return start_date, end_date
 
 
 ErrorsPage()

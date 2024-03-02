@@ -251,7 +251,7 @@ class HomeViewModel(metaclass=SingletonMeta):
             groundtruths: list[list[Polygon]],
     ):
         df = pandas.DataFrame({
-            'date': date,
+            'date': pandas.to_datetime(date, format='%Y-%m-%d-%H-%M-%S-%f'),
             'tracker': tracker,
             'dataset': dataset,
             'sequence': sequences,
