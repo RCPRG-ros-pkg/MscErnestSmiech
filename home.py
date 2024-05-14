@@ -17,6 +17,8 @@ class TestsPage:
 
     def __init__(self) -> None:
         super().__init__()
+        self.view_model.set_page_name()
+
         self.sidebar()
 
         st.header("Results")

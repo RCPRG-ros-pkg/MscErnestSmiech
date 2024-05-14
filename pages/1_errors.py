@@ -17,6 +17,8 @@ class ErrorsPage:
     def __init__(self) -> None:
         super().__init__()
 
+        self.errors_view_model.set_page_name()
+
         st.set_page_config(page_title="Error frames viewer", page_icon="📈")
 
         self.sidebar()
@@ -28,13 +30,29 @@ class ErrorsPage:
             if len(selected_rows) == 1:
                 self.display_picture()
 
-            st.markdown("## Scores")
-
-            self.display_plots()
-            self.display_iou_table()
-            self.display_time_table()
+            self.display_scores()
 
         self.display_selector()
+
+    def display_scores(self):
+        df_success_plot = self.errors_view_model.get_success_plot()
+        if df_success_plot is None or df_success_plot.empty:
+            return
+        df_ar_plot = self.errors_view_model.get_ar_plot()
+        if df_ar_plot is None or df_ar_plot.empty:
+            return
+        df_iou_table = self.errors_view_model.get_iou_table()
+        if df_iou_table is None or df_iou_table.empty:
+            return
+        df_time_table = self.errors_view_model.get_time_table()
+        if df_time_table is None or df_time_table.empty:
+            return
+
+        st.markdown("## Scores")
+
+        self.display_plots(df_success_plot, df_ar_plot)
+        self.display_iou_table(df_iou_table)
+        self.display_time_table(df_time_table)
 
     def display_selector(self):
         st.markdown("## Selector")
@@ -60,14 +78,11 @@ class ErrorsPage:
             args=[self.errors_view_model.get_df_table()]
         )
 
-    def display_time_table(self):
-        data = self.errors_view_model.get_time_tables()
-        if data is None or data.empty:
-            return
-
+    @staticmethod
+    def display_time_table(table: pandas.DataFrame):
         st.text("Times table")
         st.data_editor(
-            data,
+            table,
             column_config={
                 "tracker": "Tracker",
                 "dataset": "Dataset",
@@ -86,14 +101,11 @@ class ErrorsPage:
             hide_index=True
         )
 
-    def display_iou_table(self):
-        data = self.errors_view_model.get_iou_table()
-        if data is None or data.empty:
-            return
-
+    @staticmethod
+    def display_iou_table(table: pandas.DataFrame):
         st.text("Iou table")
         st.data_editor(
-            data,
+            table,
             column_config={
                 "tracker": "Tracker",
                 "dataset": "Dataset",
@@ -115,16 +127,13 @@ class ErrorsPage:
             hide_index=True
         )
 
-    def display_plots(self):
-        data = self.errors_view_model.get_success_plot()
-        if data is None or data.empty:
-            return
-
+    @staticmethod
+    def display_plots(success_plot: pandas.DataFrame, ar_plot: pandas.DataFrame):
         iou_quality, iou_ar = st.columns(2)
         with iou_quality:
             st.text("Quality plot")
             st.line_chart(
-                data,
+                success_plot,
                 x='threshold',
                 y='success',
                 color='date',
@@ -133,7 +142,7 @@ class ErrorsPage:
         with iou_ar:
             st.text("AR plot")
             st.scatter_chart(
-                self.errors_view_model.get_ar_plot(),
+                ar_plot,
                 x='robustness',
                 y='accuracy',
                 color='date',
@@ -144,10 +153,10 @@ class ErrorsPage:
         self.errors_view_model.load_images()
 
         try:
-            image = self.errors_view_model.get_image(self.errors_view_model.get_image_count())
+            image = self.errors_view_model.get_current_image()
         except IndexError:
-            self.errors_view_model.zero_image_count()
-            image = self.errors_view_model.get_image(self.errors_view_model.get_image_count())
+            self.errors_view_model.zero_selected_image_index()
+            image = self.errors_view_model.get_current_image()
 
         st.markdown("## Errors")
 
@@ -157,11 +166,11 @@ class ErrorsPage:
 
             _, col1, col2, col3, _ = st.columns((3, 1, 1, 1, 3))
             with col1:
-                st.button("←", on_click=self.errors_view_model.decrease_image_count)
+                st.button("←", on_click=self.errors_view_model.decrease_selected_image_index)
             with col2:
-                st.write(f"{self.errors_view_model.get_image_count()}/{len(self.errors_view_model.get_images())}")
+                st.write(f"{self.errors_view_model.get_image_index()}/{len(self.errors_view_model.get_images())}")
             with col3:
-                st.button("→", on_click=self.errors_view_model.increase_image_count)
+                st.button("→", on_click=self.errors_view_model.increase_selected_image_index)
 
     def sidebar(self) -> None:
         with st.sidebar.form("Options"):

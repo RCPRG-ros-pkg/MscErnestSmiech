@@ -326,3 +326,6 @@ class HomeViewModel(metaclass=SingletonMeta):
             self.average_time(_selection[0], _selection[1], detection_times, trajectories, groundtruths)
             self.save_results(dates, _selection[0], _selection[1], sequences, detection_times, trajectories, groundtruths)
         self.state_locator.clear_selection()
+
+    def set_page_name(self):
+        self.data_locator.modify_current_page("home")

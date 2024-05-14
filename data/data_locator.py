@@ -12,6 +12,7 @@ class DataLocator(metaclass=SingletonMeta):
 
     _cache: None | dict[str, pandas.DataFrame] = None
     _results: None | pandas.DataFrame = None
+    _current_page: str | None = None
 
     def provide_results(self) -> pandas.DataFrame:
         if self._results is None:
@@ -81,3 +82,9 @@ class DataLocator(metaclass=SingletonMeta):
             self._cache[name] = pandas.read_csv(f"{cache_dir}/{name}.csv")
             if set_index:
                 self._cache[name] = self._cache[name].set_index(['Tracker', 'Dataset'])
+
+    def provide_current_page(self) -> str | None:
+        return self._current_page
+
+    def modify_current_page(self, page_name: str):
+        self._current_page = page_name

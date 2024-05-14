@@ -1,4 +1,5 @@
 import glob
+import re
 from datetime import datetime
 
 import numpy
@@ -33,8 +34,8 @@ class ErrorsViewModel(metaclass=SingletonMeta):
             'date': self.df['date'].unique().tolist(),
         }
 
-    def get_image_count(self) -> int:
-        return self._state_locator.provide_image_count()
+    def get_image_index(self) -> int:
+        return self._state_locator.provide_selected_image_index()
 
     def set_selected_rows(self, df: pandas.DataFrame):
         self._selected_rows = df
@@ -45,8 +46,8 @@ class ErrorsViewModel(metaclass=SingletonMeta):
     def get_images(self) -> [str]:
         return self._images
 
-    def get_image(self, index) -> str:
-        return self._images[index]
+    def get_current_image(self) -> str:
+        return self._images[self._state_locator.provide_selected_image_index()]
 
     def set_images(self, images: [str]):
         self._images = images
@@ -55,6 +56,7 @@ class ErrorsViewModel(metaclass=SingletonMeta):
         d = self.get_selected_rows().head(1)
         d = d[['tracker', 'dataset', 'sequence', 'date']].astype(str).values.flatten().tolist()
         d[1] = datasets[d[1]]
+        d[-1] = re.sub('[^\d]', '-', d[-1])
         self.set_images(glob.glob(f"./raw/errors/{'/'.join(d)}/*"))
 
     def set_tracker_selection(
@@ -96,14 +98,14 @@ class ErrorsViewModel(metaclass=SingletonMeta):
 
             self.set_selected_rows(df_table.iloc[selected_indexes])
 
-    def increase_image_count(self):
-        self._state_locator.increase_image_count()
+    def increase_selected_image_index(self):
+        self._state_locator.increase_selected_image_index()
 
-    def decrease_image_count(self):
-        self._state_locator.decrease_image_count()
+    def decrease_selected_image_index(self):
+        self._state_locator.decrease_selected_image_index()
 
-    def zero_image_count(self):
-        self._state_locator.zero_image_count()
+    def zero_selected_image_index(self):
+        self._state_locator.zero_selected_image_index()
 
     def get_success_plot(self) -> None | pandas.DataFrame:
         selected_rows = self.get_selected_rows()
@@ -121,16 +123,19 @@ class ErrorsViewModel(metaclass=SingletonMeta):
         arr = numpy.array([item for row in success[0] for item in row])
         arr = arr.reshape((len(arr)//2, 2))
         tmp = pandas.DataFrame(arr, columns=['threshold', 'success'])
-        tmp['date'] = success['date']
+        tmp['date'] = success['date'].map(lambda x: x.strftime('%Y-%m-%d-%H-%M-%S-%f'))
 
         return tmp
 
-    def get_time_tables(self) -> None | pandas.DataFrame:
+    def get_time_table(self) -> None | pandas.DataFrame:
         selected_rows = self.get_selected_rows()
         if selected_rows is None:
             return None
 
         _df = self._data_locator.provide_results()[self._data_locator.provide_results()['date'].isin(selected_rows['date'])]
+
+        if _df is None or _df.empty:
+            return None
 
         times_quality_auxiliary = pandas.DataFrame(
             numpy.vectorize(time_quality_auxiliary)(_df['times'], _df['trajectory'], _df['groundtruth'])
@@ -143,11 +148,11 @@ class ErrorsViewModel(metaclass=SingletonMeta):
         return pandas.concat(
             [
                 _df[['tracker', 'dataset', 'sequence', 'date']],
-                times_quality_auxiliary.rename(columns={0: 'robustness', 1: "nre", 2: "dre", 3: "ad"}),
-                times_sequence,
+                times_quality_auxiliary.rename(columns={0: 'robustness', 1: "nre", 2: "dre", 3: "ad"}).set_index(_df.index),
+                times_sequence.set_index(_df.index),
             ],
             axis=1,
-        )
+        ).reset_index(drop=True)
 
     def get_iou_table(self) -> None | pandas.DataFrame:
         selected_rows = self.get_selected_rows()
@@ -155,6 +160,9 @@ class ErrorsViewModel(metaclass=SingletonMeta):
             return None
 
         _df = self._data_locator.provide_results()[self._data_locator.provide_results()['date'].isin(selected_rows['date'])]
+
+        if _df is None or _df.empty:
+            return None
 
         quality = pandas.DataFrame(
             numpy.vectorize(quality_auxiliary)(_df['trajectory'], _df['groundtruth'])
@@ -171,23 +179,37 @@ class ErrorsViewModel(metaclass=SingletonMeta):
         T, F, M, _, _ = numpy.vectorize(count_frames)(_df['trajectory'], _df['groundtruth'])
         robustness = pandas.DataFrame(T / (T + F + M), columns=['robustness'])
 
-        return pandas.concat(
+        wut = pandas.concat(
             [
                 _df[['tracker', 'dataset', 'sequence', 'date']],
-                quality.rename(columns={0: "nre", 1: "dre", 2: "ad"}),
-                accuracy,
-                stt_ious,
-                robustness,
+                quality.rename(columns={0: "nre", 1: "dre", 2: "ad"}).set_index(_df.index),
+                accuracy.set_index(_df.index),
+                stt_ious.set_index(_df.index),
+                robustness.set_index(_df.index),
             ],
             axis=1,
-        ).rename(columns={0: "success"})
+        ).rename(columns={0: "success"}).reset_index(drop=True)
 
-    def get_ar_plot(self):
-        return self.get_iou_table()[['accuracy', 'robustness', 'date']]
+        return wut
+
+    def get_ar_plot(self) -> pandas.DataFrame | None:
+        df = self.get_iou_table()
+        if df is None:
+            return None
+        df = df[['accuracy', 'robustness', 'date']]
+        df['date'] = df['date'].map(lambda x: x.strftime('%Y-%m-%d-%H-%M-%S-%f'))
+        return df
 
     def get_available_dates(self) -> numpy.ndarray[datetime.date]:
         return self.df['date'].unique().map(lambda d: d.date()).unique()
 
     def get_available_times(self) -> numpy.ndarray[datetime.time]:
         return self.df['date'].unique().map(lambda d: d.time()).unique()
+
+    def set_page_name(self):
+        if self._data_locator.provide_current_page() != "errors":
+            self._selected_rows = None
+            self._images = []
+
+        self._data_locator.modify_current_page("errors")
 

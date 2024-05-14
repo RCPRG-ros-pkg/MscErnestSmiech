@@ -43,23 +43,23 @@ class StateLocator(metaclass=SingletonMeta):
     def _create_selection():
         st.session_state["selection"]: [(str, str)] = []
 
-    def provide_image_count(self) -> int:
-        if 'count' not in st.session_state:
-            self._create_image_count()
+    def provide_selected_image_index(self) -> int:
+        if 'selected_image_index' not in st.session_state:
+            self._create_selected_image_index()
 
-        return st.session_state.count
-
-    @staticmethod
-    def increase_image_count():
-        st.session_state.count += 1
+        return st.session_state.selected_image_index
 
     @staticmethod
-    def decrease_image_count():
-        st.session_state.count -= 1
+    def increase_selected_image_index():
+        st.session_state.selected_image_index += 1
 
     @staticmethod
-    def zero_image_count():
-        st.session_state.count = 0
+    def decrease_selected_image_index():
+        st.session_state.selected_image_index -= 1
 
-    def _create_image_count(self):
-        self.zero_image_count()
+    @staticmethod
+    def zero_selected_image_index():
+        st.session_state.selected_image_index = 0
+
+    def _create_selected_image_index(self):
+        self.zero_selected_image_index()
