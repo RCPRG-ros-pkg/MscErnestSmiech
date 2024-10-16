@@ -84,7 +84,7 @@ class TrackerMedianFlow(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.legacy.TrackerMedianFlow_create()
+        return cv2.legacy.TrackerMedianFlow().create()
 
 
 class TrackerBoosting(TrackerCV2):
@@ -95,7 +95,7 @@ class TrackerBoosting(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.legacy.TrackerBoosting_create()
+        return cv2.legacy.TrackerBoosting().create()
 
 
 class TrackerMIL(TrackerCV2):
@@ -106,7 +106,7 @@ class TrackerMIL(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.TrackerMIL_create()
+        return cv2.legacy.TrackerMIL().create()
 
 
 class TrackerKCF(TrackerCV2):
@@ -117,7 +117,7 @@ class TrackerKCF(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.TrackerKCF_create()
+        return cv2.legacy.TrackerKCF().create()
 
 
 class TrackerTLD(TrackerCV2):
@@ -128,7 +128,7 @@ class TrackerTLD(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.legacy.TrackerTLD_create()
+        return cv2.legacy.TrackerTLD().create()
 
 
 class TrackerGOTURN(TrackerCV2):
@@ -139,7 +139,7 @@ class TrackerGOTURN(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.TrackerGOTURN_create()
+        return cv2.legacy.TrackerGOTURN().create()
 
 
 class TrackerMOSSE(TrackerCV2):
@@ -150,7 +150,7 @@ class TrackerMOSSE(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.legacy.TrackerMOSSE_create()
+        return cv2.legacy.TrackerMOSSE().create()
 
 
 class TrackerCSRT(TrackerCV2):
@@ -161,7 +161,7 @@ class TrackerCSRT(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.TrackerCSRT_create()
+        return cv2.legacy.TrackerCSRT().create()
 
 
 class DummyTracker(Tracker):
