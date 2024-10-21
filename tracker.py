@@ -106,7 +106,7 @@ class TrackerMIL(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.legacy.TrackerMIL().create()
+        return cv2.TrackerMIL().create()
 
 
 class TrackerKCF(TrackerCV2):
@@ -139,7 +139,7 @@ class TrackerGOTURN(TrackerCV2):
 
     @property
     def tracker(self) -> cv2.Tracker:
-        return cv2.legacy.TrackerGOTURN().create()
+        return cv2.TrackerGOTURN().create()
 
 
 class TrackerMOSSE(TrackerCV2):
