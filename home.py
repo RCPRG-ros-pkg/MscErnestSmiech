@@ -8,6 +8,13 @@ from stack import datasets
 
 
 class TestsPage:
+    """
+    Main page that allows:
+     - selecting trackers and datasets for tests
+     - displaying scores as plots and tables
+     - selecting which trackers to show on plots
+    """
+
     state_locator = StateLocator()
     view_model = HomeViewModel()
 
@@ -29,6 +36,9 @@ class TestsPage:
         self.draw_time_table()
 
     def sidebar(self) -> None:
+        """
+        Displays sidebar that allows to select tracker and dataset for test as well as start the test.
+        """
         with st.sidebar.form("Options"):
             tracker = st.selectbox('Trackers', self.view_model.tracker_names)
             selected_dataset = st.selectbox("Datasets", datasets.keys())
@@ -54,6 +64,9 @@ class TestsPage:
             self.current_frame_image.empty()
 
     def draw_iou_scores(self):
+        """
+        Draws plots - quality and AR.
+        """
         iou_quality, iou_ar = st.columns(2)
 
         ts = self.view_model.get_quality_plot()
@@ -67,6 +80,9 @@ class TestsPage:
             iou_ar.scatter_chart(ra, x='Robustness', y='Accuracy', color='TrackerDataset', height=300)
 
     def draw_iou_table(self):
+        """
+        Draws tables with information related to iou also allows to select which trackers to display on plots.
+        """
         df = self.view_model.get_iou_table()
 
         if df is not None:
@@ -101,6 +117,9 @@ class TestsPage:
             )
 
     def draw_time_table(self):
+        """
+        Draws tables with information related to times.
+        """
         df = self.view_model.get_time_table()
 
         if df is not None:

@@ -86,6 +86,12 @@ def minimum_bounding_rectangle(points) -> numpy.ndarray[Any, numpy.dtype[numpy.f
 
 
 def polygon_to_tuple(polygon: Polygon) -> tuple[int, int, int, int] | None:
+    """
+    Changes shapely Polygon into tuple that's representing the corners of the bounding box.
+
+    :param polygon:
+    :return: (x, y, width, height)
+    """
     _xx, _yy = polygon.exterior.coords.xy
     _coords = tuple(zip(_xx, _yy))
     _l = minimum_bounding_rectangle(numpy.array(_coords).astype(int))
@@ -102,6 +108,12 @@ def polygon_to_tuple(polygon: Polygon) -> tuple[int, int, int, int] | None:
 
 
 def get_concrete_classes(cls):
+    """
+    Convenient function used to get all non-abstract classes that inherit from abstract parent. Used to get all trackers
+    that extend Tracker abstract class.
+    :param cls:
+    :return:
+    """
     for subclass in cls.__subclasses__():
         yield from get_concrete_classes(subclass)
         if not inspect.isabstract(subclass):
@@ -109,6 +121,11 @@ def get_concrete_classes(cls):
 
 
 def get_ground_truth_positions(_file_name: str) -> list[Polygon]:
+    """
+    Convenience functions for reading ground truth from file.
+    :param _file_name:
+    :return: list of shapely Polygon
+    """
     with open(_file_name) as csvfile:
         # _ground_truth_pos = [[int(x) for x in y] for y in csv.reader(csvfile, delimiter='\t')]
         _ground_truth_pos = [create_polygon([abs(int(float(x))) for x in y]) for y in csv.reader(csvfile)]

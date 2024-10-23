@@ -18,6 +18,9 @@ from stack import datasets
 
 
 class ErrorsViewModel(metaclass=SingletonMeta):
+    """
+    ViewModel for ErrorsPage. It's a single source for handling data.
+    """
     _data_locator = DataLocator()
     _state_locator = StateLocator()
 
@@ -53,6 +56,9 @@ class ErrorsViewModel(metaclass=SingletonMeta):
         self._images = images
 
     def load_images(self):
+        """
+        Loads images for selected options.
+        """
         d = self.get_selected_rows().head(1)
         d = d[['tracker', 'dataset', 'sequence', 'date']].astype(str).values.flatten().tolist()
         d[1] = datasets[d[1]]
@@ -67,6 +73,15 @@ class ErrorsViewModel(metaclass=SingletonMeta):
             start_date: datetime,
             end_date: datetime,
     ):
+        """
+        Method sets selected options. If any wasn't set then it fallbacks to last selection.
+
+        :param trackers:
+        :param datasets:
+        :param sequences:
+        :param start_date:
+        :param end_date:
+        """
         foo = self.df['date'].unique()
         self._tracker_selection = {
             'tracker': trackers if trackers else self.df['tracker'].unique().tolist(),
@@ -75,7 +90,10 @@ class ErrorsViewModel(metaclass=SingletonMeta):
             'date': foo[(foo > start_date) & (foo < end_date)],
         }
 
-    def get_df_table(self):
+    def get_df_table(self) -> pandas.DataFrame:
+        """
+        :return: DataFrame based on selection.
+        """
         return self.df[
             self.df['tracker'].isin(self._tracker_selection['tracker']) &
             self.df['dataset'].isin(self._tracker_selection['dataset']) &
@@ -85,9 +103,17 @@ class ErrorsViewModel(metaclass=SingletonMeta):
 
     @property
     def df(self) -> pandas.DataFrame:
+        """
+        :return: DataFrame of raw results
+        """
         return self._data_locator.provide_results()[['tracker', 'dataset', 'sequence', 'date', 'selected']]
 
     def on_table_change(self, df_table):
+        """
+        Method that handles Streamlit table changes.
+
+        :param df_table:
+        """
         if 'table' in st.session_state:
             edited = st.session_state.table['edited_rows']
 

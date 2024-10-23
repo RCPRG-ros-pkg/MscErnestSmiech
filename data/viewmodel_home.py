@@ -19,6 +19,9 @@ from utils.tracker_test import get_ground_truth_positions
 
 
 class CalculationsDelegate:
+    """
+    Delegate for metrics. Allows to reduce clutter in ViewModel. Each method saves results to cache.
+    """
 
     def __init__(self, data_locator):
         super().__init__()
@@ -161,6 +164,9 @@ class CalculationsDelegate:
 
 
 class HomeViewModel(metaclass=SingletonMeta):
+    """
+    ViewModel for TestsPage. It's a single source for handling data.
+    """
 
     state_locator = StateLocator()
     data_locator = DataLocator()
@@ -171,6 +177,11 @@ class HomeViewModel(metaclass=SingletonMeta):
         return getattr(CalculationsDelegate(self.data_locator), __name)
 
     def on_iou_table_change(self, df_tracker_dataset):
+        """
+        Method that handles Streamlit table changes. Used for selecting trackers for plots.
+
+        :param df_tracker_dataset:
+        """
         if 'show_iou_trackers' in st.session_state:
             edited = st.session_state.show_iou_trackers['edited_rows']
 
@@ -250,6 +261,17 @@ class HomeViewModel(metaclass=SingletonMeta):
             trajectories: list[list[Polygon | None]],
             groundtruths: list[list[Polygon]],
     ):
+        """
+        Saves results. Raw data is appended to results file and calculated values are saved in cache.
+
+        :param date:
+        :param tracker:
+        :param dataset:
+        :param sequences:
+        :param times:
+        :param trajectories:
+        :param groundtruths:
+        """
         df = pandas.DataFrame({
             'date': pandas.to_datetime(date, format='%Y-%m-%d-%H-%M-%S-%f'),
             'tracker': tracker,
@@ -289,6 +311,13 @@ class HomeViewModel(metaclass=SingletonMeta):
             handle_current_example_bar: Callable[[int, int, str], None],
             handle_current_frame_image: Callable[[numpy.ndarray], None]
     ) -> None:
+        """
+        Handles starting tests when submit button is pressed.
+
+        :param handle_all_examples_bar: listener for progress bar
+        :param handle_current_example_bar: listener for progress bar
+        :param handle_current_frame_image: listener for current image
+        """
         # tracker, dataset
         for _selection in self.state_locator.provide_selection():
             sequences = []

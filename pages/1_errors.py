@@ -10,6 +10,10 @@ from data.viewmodel_errors import ErrorsViewModel
 
 # todo przycisk clear
 class ErrorsPage:
+    """
+    Second page that allows displaying frames where tracker failed to track as well as what was tracker's performance in
+    selected test. User can filter through trackers, datasets, sequences and dates when test was performed.
+    """
     errors_view_model = ErrorsViewModel()
 
     image_displayer: DeltaGenerator | None = None
@@ -55,6 +59,9 @@ class ErrorsPage:
         self.display_time_table(df_time_table)
 
     def display_selector(self):
+        """
+        Displays selector that allows to select trackers, datasets, sequences and dates when test was performed
+        """
         st.markdown("## Selector")
         st.data_editor(
             self.errors_view_model.get_df_table(),
@@ -150,6 +157,9 @@ class ErrorsPage:
             )
 
     def display_picture(self):
+        """
+        Displays pictures of failed frames. Allows to move to next or previous picture.
+        """
         self.errors_view_model.load_images()
 
         try:
@@ -173,6 +183,9 @@ class ErrorsPage:
                 st.button("→", on_click=self.errors_view_model.increase_selected_image_index)
 
     def sidebar(self) -> None:
+        """
+        Sidebar for filtering records in table.
+        """
         with st.sidebar.form("Options"):
             trackers = st.multiselect('Trackers', self.errors_view_model.df['tracker'].unique())
             datasets = st.multiselect("Datasets", self.errors_view_model.df['dataset'].unique())

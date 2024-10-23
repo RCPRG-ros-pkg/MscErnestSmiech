@@ -4,7 +4,6 @@ from typing import Callable, List, Tuple
 
 import cv2
 import numpy
-from pandas import DataFrame
 from shapely import Polygon
 
 from utils.tracker_test import test_tracker
@@ -12,6 +11,9 @@ from utils.utils import polygon_to_tuple
 
 
 class Tracker(ABC):
+    """
+    Wrapper for tracker that provides unified interface for later use in tracker_test.py
+    """
 
     @property
     @abstractmethod
@@ -21,6 +23,8 @@ class Tracker(ABC):
     @abstractmethod
     def init(self, ground_truth_polygon: Polygon, frame: numpy.ndarray):
         """
+        Should be used to initialize tracker with first frame.
+
         :param ground_truth_polygon: ground truth position of object in frame to track
         :param frame: frame of video with object to track
         """
@@ -29,6 +33,8 @@ class Tracker(ABC):
     @abstractmethod
     def eval(self, frame: numpy.ndarray) -> (bool, list[float]):
         """
+        Supplies a frame with an object to track.
+
         :param frame:
         :return:
         """
@@ -43,6 +49,19 @@ class Tracker(ABC):
             listener: Callable[[int, int], None] = None,
             frame_listener: Callable[[numpy.ndarray], None] = None
     ) -> tuple[str, list[int], list[Polygon|None]]:
+        """
+        Method used to perform test of a tracker. listener and frame_listener are used in streamlit to nicely show
+        tracking progress. Returned value consists of date string, list of times in milliseconds tracker needed to
+        finish its work, list of trajectories which are polygons defined by Polygon from shapely.
+
+        :param dataset_dir: path to directory with dataset
+        :param show_tracking: shows window with current state of tracker
+        :param iou_threshold_for_correction: threshold when tracker should be reinitialized
+        :param iou_threshold_for_recording: threshold when frames should be saved to memory
+        :param listener: used for progress bar - returns current frame number and number of all frames
+        :param frame_listener: returns current frame with tracker bounding box, ground truth box, IoU and few other informations
+        :return: date when test was performed, time for detection, trajectories returned by tracker
+        """
         return test_tracker(
             self,
             dataset_dir,
@@ -60,6 +79,11 @@ class TrackerCV2(Tracker, ABC):
     @property
     @abstractmethod
     def tracker(self) -> cv2.Tracker:
+        """
+        Convenience method for OpenCV tracker object. Should only return object.
+
+        :return: cv2 Tracker object
+        """
         pass
 
     def init(self, ground_truth_polygon: Polygon, frame: numpy.ndarray):
@@ -165,6 +189,9 @@ class TrackerCSRT(TrackerCV2):
 
 
 class DummyTracker(Tracker):
+    """
+    Tracker always returning first bounding box it received. Useful for making sure everything works.
+    """
 
     _ground_truth: Tuple[int, int, int, int] | None = None
 

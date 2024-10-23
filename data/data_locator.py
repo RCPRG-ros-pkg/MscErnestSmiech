@@ -9,6 +9,10 @@ from stack import cache_dir, results_dir, results_file
 
 
 class DataLocator(metaclass=SingletonMeta):
+    """
+    Locator pattern for data. It makes sure there's single source of truth for data. It holds raw data from tests in
+    results as well as calculated values in cache.
+    """
 
     _cache: None | dict[str, pandas.DataFrame] = None
     _results: None | pandas.DataFrame = None
@@ -43,6 +47,11 @@ class DataLocator(metaclass=SingletonMeta):
             self._results = _results
 
     def concat_results(self, df: pandas.DataFrame):
+        """
+        Adds new results to existing ones.
+        :param df:
+        :return:
+        """
         self._results = pandas.concat([self.provide_results(), df])
 
     def provide_cache(self) -> dict[str, pandas.DataFrame]:
