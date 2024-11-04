@@ -7,7 +7,13 @@ from analysis.utils import polygon_to_intarray, create_polygon
 from stack import results_file
 
 
-def create_cubes(_tr: list[list[int]]):
+def create_cubes(_tr: list[list[int]]) -> list[ConvexPolyhedron]:
+    """
+    Function returns list of Polyhedrons later used by renderer to draw example of stt_iou
+
+    :param _tr: list of trajectories
+    :return: list of Polyhedrons
+    """
     polygons = []
     for z, t in enumerate(_tr):
         points = []
@@ -31,6 +37,11 @@ def create_cubes(_tr: list[list[int]]):
 
 
 if __name__ == '__main__':
+    """
+    Function draws stt_iou of ground truth, tracker and their intersection.
+    
+    You may need to tweak show function to properly display tubes.
+    """
     results = pandas.read_csv(f"../{results_file}")
     trajectories = results.trajectory.apply(json.loads)
     groundtruths = results.groundtruth.apply(json.loads)

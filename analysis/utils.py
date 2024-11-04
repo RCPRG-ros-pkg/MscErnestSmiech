@@ -28,17 +28,13 @@ def calculate_overlap(first: Polygon | None, second: Polygon | None) -> float:
 
 
 def calculate_overlaps(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> list[float | None]:
-    """ Calculate the overlap between two lists of regions. The function first rasterizes both regions to 2-D binary masks and calculates overlap between them
+    """
+    Calculate the overlap between two lists of regions. The function first rasterizes both regions to 2-D binary masks and calculates overlap between them
 
-    Args:
-        trajectory: first list of regions
-        groundtruth: second list of regions
-
-    Returns:
-        list of floats with the overlap between the two regions. Note that overlap is one by definition if both regions are empty.
-
-    Raises:
-        RegionException: if the lists are not of the same size
+    :param trajectory: Trajectory of the tracker.
+    :param groundtruth: Groundtruth trajectory.
+    :return: list of floats with the overlap between the two regions. Note that overlap is one by definition if both regions are empty.
+    :raises: Exception: if the lists are not of the same size
     """
     if not len(trajectory) == len(groundtruth):
         raise Exception("List not of the same size {} != {}".format(len(trajectory), len(groundtruth)))
@@ -46,6 +42,13 @@ def calculate_overlaps(trajectory: list[Polygon | None], groundtruth: list[Polyg
 
 
 def create_polygon(_points: list[int | float] | tuple[int | float]) -> Polygon:
+    """
+    Creates list of polygons given list of points. If given are 4 points they are treated as (x, y, w, h) otherwise
+    it's treated as list of (x, y) points.
+
+    :param _points: list of points
+    :return: list of polygons
+    """
     if len(_points) == 4:
         _x, _y, _width, _height = _points
         _polygon = Polygon([

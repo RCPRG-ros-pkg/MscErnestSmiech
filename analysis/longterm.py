@@ -6,6 +6,13 @@ from analysis.utils import calculate_overlaps
 
 
 def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
+    """
+    Counts the number of frames where the tracker is correct, fails, misses, hallucinates or notices an object.
+
+    :param trajectory: Trajectory of the tracker.
+    :param groundtruth: Groundtruth trajectory.
+    :return: Number of frames where the tracker is correct, fails, misses, hallucinates or notices an object.
+    """
     overlaps = numpy.array(calculate_overlaps(trajectory, groundtruth))
 
     # Tracking, Failure, Miss, Hallucination, Notice
@@ -30,6 +37,13 @@ def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
 
 
 def accuracy_robustness(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> [float, float]:
+    """
+    Longterm multi-object accuracy-robustness measure.
+
+    :param trajectories: list of sequences of regions predicted by the tracker.
+    :param groundtruths: list of sequences of groundtruth regions.
+    :return: tuple (robustness, accuracy)
+    """
     accuracy = 0
     robustness = 0
     count = 0
@@ -45,6 +59,13 @@ def accuracy_robustness(trajectories: list[list[Polygon | None]], groundtruths: 
 
 
 def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> tuple[float, float, float]:
+    """
+    Computes the non-reported error, drift-rate error and absence-detection quality.
+
+    :param trajectory: Trajectory of the tracker.
+    :param groundtruth: Groundtruth trajectory.
+    :return: tuple of (nre, dre, ad)
+    """
     T, F, M, H, N = count_frames(trajectory, groundtruth)
 
     not_reported_error = M / (T + F + M)
@@ -59,6 +80,13 @@ def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygo
 
 
 def average_quality_auxiliary(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> [float, float, float]:
+    """
+    Computes the average non-reported error, drift-rate error and absence-detection quality.
+
+    :param trajectories: list of sequences of regions predicted by the tracker.
+    :param groundtruths: list of sequences of groundtruth regions.
+    :return: tuple of average (nre, dre, ad)
+    """
     not_reported_error = 0
     drift_rate_error = 0
     absence_detection = 0

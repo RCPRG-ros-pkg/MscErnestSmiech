@@ -8,6 +8,13 @@ from stack import results_file
 
 
 def stt_iou(_tr: list[Polygon], _gt: list[Polygon]) -> float:
+    """
+    Calculates average precision based on spatio-temporal tubes.
+
+    :param _tr: Trajectory of the tracker.
+    :param _gt: Groundtruth trajectory.
+    :return: average precision
+    """
     intersect = 0
     union = 0
 
@@ -26,6 +33,13 @@ def stt_iou(_tr: list[Polygon], _gt: list[Polygon]) -> float:
 
 
 def average_stt_iou(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> float:
+    """
+    Averages stt-ap from all sequences.
+
+    :param trajectories: list of sequences of regions predicted by the tracker.
+    :param groundtruths: list of sequences of groundtruth regions.
+    :return: average ap from all sequences
+    """
     cumulative = 0
     count = 0
 

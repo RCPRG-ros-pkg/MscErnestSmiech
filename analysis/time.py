@@ -11,6 +11,15 @@ def gather_time_in_overlaps(
         ignore_invisible: bool = False,
         threshold: float = -1
 ) -> numpy.ndarray:
+    """
+    Gather time in overlaping regions.
+
+    :param trajectory: List of regions predicted by the tracker.
+    :param groundtruth: List of groundtruth regions.
+    :param ignore_invisible: Ignore invisible regions in the groundtruth.
+    :param threshold: Minimum overlap to consider.
+    :return: np.ndarray: List of times.
+    """
     _times = numpy.array(times)
     overlaps = numpy.array(calculate_overlaps(trajectory, groundtruth))
     mask = numpy.ones(len(overlaps), dtype=bool)
@@ -35,6 +44,16 @@ def sequence_time(
         ignore_invisible: bool = False,
         threshold: float = -1
 ) -> float:
+    """
+    Gather average time of overlaping frames.
+
+    :param times: list of times
+    :param trajectory: List of regions predicted by the tracker.
+    :param groundtruth: List of groundtruth regions.
+    :param ignore_invisible: Ignore invisible regions in the groundtruth.
+    :param threshold: Minimum overlap to consider.
+    :return: average time
+    """
     cummulative = 0
     overlaps = gather_time_in_overlaps(times, trajectory, groundtruth, ignore_invisible, threshold)
 
@@ -49,6 +68,14 @@ def average_time(
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ) -> float:
+    """
+    Gather average times from all sequences.
+
+    :param times: list of times of sequences.
+    :param trajectories: list of sequences of regions predicted by the tracker.
+    :param groundtruths: list of sequences of groundtruth regions.
+    :return: average times.
+    """
     quality = 0
     count = 0
 
@@ -64,6 +91,13 @@ def count_time_frames(
         trajectory: list[Polygon | None],
         groundtruth: list[Polygon]
 ) -> tuple[[], [], [], [], []]:
+    """
+    gathers times when the tracker is correct, fails, misses, hallucinates or notices an object.
+
+    :param trajectory: Trajectory of the tracker.
+    :param groundtruth: Groundtruth trajectory.
+    :return: Times when the tracker is correct, fails, misses, hallucinates or notices an object.
+    """
     overlaps = numpy.array(calculate_overlaps(trajectory, groundtruth))
 
     # Tracking, Failure, Miss, Hallucination, Notice
@@ -92,6 +126,13 @@ def time_quality_auxiliary(
         trajectory: list[Polygon | None],
         groundtruth: list[Polygon]
 ) -> tuple[int, int, int, int]:
+    """
+    Computes the times spent in robustness, non-reported error, drift-rate error and absence-detection quality.
+
+    :param trajectory: Trajectory of the tracker.
+    :param groundtruth: Groundtruth trajectory.
+    :return: tuple of times of (robustness, nre, dre, ad)
+    """
     T, F, M, H, N = count_time_frames(times, trajectory, groundtruth)
 
     if M:
@@ -120,6 +161,13 @@ def average_time_quality_auxiliary(
         trajectories: list[list[Polygon | None]],
         groundtruths: list[list[Polygon]]
 ) -> [float, float, float, float]:
+    """
+    Computes the average times spent in robustness, non-reported error, drift-rate error and absence-detection quality.
+
+    :param trajectories: list of sequences of regions predicted by the tracker.
+    :param groundtruths: list of sequences of groundtruth regions.
+    :return: tuple of average times of (robustness, nre, dre, ad)
+    """
     not_reported_error = 0
     drift_rate_error = 0
     absence_detection = 0

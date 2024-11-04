@@ -49,7 +49,7 @@ class DataLocator(metaclass=SingletonMeta):
     def concat_results(self, df: pandas.DataFrame):
         """
         Adds new results to existing ones.
-        :param df:
+        :param df: results in DataFrame
         :return:
         """
         self._results = pandas.concat([self.provide_results(), df])
