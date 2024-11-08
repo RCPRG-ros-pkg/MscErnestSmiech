@@ -29,7 +29,7 @@ def calculate_overlap(first: Polygon | None, second: Polygon | None) -> float:
 
 def calculate_overlaps(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> list[float | None]:
     """
-    Calculate the overlap between two lists of regions. The function first rasterizes both regions to 2-D binary masks and calculates overlap between them
+    Calculate the overlap between two lists of regions.
 
     :param trajectory: Trajectory of the tracker.
     :param groundtruth: Groundtruth trajectory.
