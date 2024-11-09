@@ -1,9 +1,10 @@
 import glob
-import re
 from datetime import datetime
 
+import cv2
 import numpy
 import pandas
+import pandas as pd
 
 import streamlit as st
 
@@ -11,10 +12,11 @@ from analysis.accuracy import success_plot, sequence_accuracy
 from analysis.longterm import quality_auxiliary, count_frames
 from analysis.stt_iou import stt_iou
 from analysis.time import sequence_time, time_quality_auxiliary
+from analysis.utils import calculate_overlaps
 from data.data_locator import DataLocator
 from data.singleton_meta import SingletonMeta
 from data.state_locator import StateLocator
-from stack import datasets
+from stack import datasets, tests_dir
 
 
 class ErrorsViewModel(metaclass=SingletonMeta):
@@ -24,7 +26,7 @@ class ErrorsViewModel(metaclass=SingletonMeta):
     _data_locator = DataLocator()
     _state_locator = StateLocator()
 
-    _images: [str] = []
+    _pd_images: pd.DataFrame | None = None
     _selected_rows: None | pandas.DataFrame = None
 
     def __init__(self):
@@ -47,23 +49,56 @@ class ErrorsViewModel(metaclass=SingletonMeta):
         return self._selected_rows
 
     def get_images(self) -> [str]:
-        return self._images
+        return self._pd_images['pictures'].tolist()
 
-    def get_current_image(self) -> str:
-        return self._images[self._state_locator.provide_selected_image_index()]
+    def get_current_image(self) -> cv2.Mat | numpy.ndarray:
+        trajectory, groundtruth, image_url = self._pd_images.iloc[self._state_locator.provide_selected_image_index()]
+        image = cv2.imread(image_url, cv2.IMREAD_COLOR)
 
-    def set_images(self, images: [str]):
-        self._images = images
+        if groundtruth is not None:
+            _xx, _yy = groundtruth.exterior.coords.xy
+            _coords = numpy.array(tuple(zip(_xx, _yy))).astype(int)
+            cv2.polylines(image, [_coords], False, (0, 255, 0), 3)
+
+        if trajectory is not None:
+            _xx, _yy = trajectory.exterior.coords.xy
+            _coords = numpy.array(tuple(zip(_xx, _yy))).astype(int)
+            cv2.polylines(image, [_coords], False, (255, 0, 0), 3)
+
+        return image
+
+    def set_pd_images(self, pd_images: pandas.DataFrame):
+        self._pd_images = pd_images
 
     def load_images(self):
         """
         Loads images for selected options.
         """
-        d = self.get_selected_rows().head(1)
-        d = d[['tracker', 'dataset', 'sequence', 'date']].astype(str).values.flatten().tolist()
-        d[1] = datasets[d[1]]
-        d[-1] = re.sub('[^\d]', '-', d[-1])
-        self.set_images(glob.glob(f"./raw/errors/{'/'.join(d)}/*"))
+        selected_rows = self.get_selected_rows()
+        if selected_rows is None:
+            return None
+
+        _df = self._data_locator.provide_results()[self._data_locator.provide_results()['date'].isin(selected_rows['date'])]
+
+        overlaps = calculate_overlaps(_df['trajectory'].iloc[0], _df['groundtruth'].iloc[0])
+        overlaps = numpy.array(overlaps)
+        indexes = numpy.argwhere(overlaps == 0).flatten()
+
+        selected_dataset, selected_sequence = selected_rows.head(1)[['dataset', 'sequence']].astype(str).values.flatten().tolist()
+        pictures = numpy.array(glob.glob(f"{tests_dir}/{datasets[selected_dataset]}/sequences/{selected_sequence}/*.jpg"))
+        pictures.sort()
+
+        _pd = pandas.DataFrame(
+            # index=indexes+2,
+            columns=['trajectory', 'groundtruth', 'pictures'],
+            data={
+                'trajectory': numpy.array(_df['trajectory'].iloc[0])[indexes],
+                'groundtruth': numpy.array(_df['groundtruth'].iloc[0])[indexes],
+                'pictures': pictures[indexes + 1]
+            }
+        )
+
+        self.set_pd_images(_pd)
 
     def set_tracker_selection(
             self,
@@ -118,9 +153,13 @@ class ErrorsViewModel(metaclass=SingletonMeta):
             edited = st.session_state.table['edited_rows']
 
             selected_indexes = []
+
             for i in edited:
                 if edited[i]['selected']:
                     selected_indexes.append(i)
+
+            if len(selected_indexes) == 1:
+                self.zero_selected_image_index()
 
             self.set_selected_rows(df_table.iloc[selected_indexes])
 
@@ -235,7 +274,6 @@ class ErrorsViewModel(metaclass=SingletonMeta):
     def set_page_name(self):
         if self._data_locator.provide_current_page() != "errors":
             self._selected_rows = None
-            self._images = []
-
-        self._data_locator.modify_current_page("errors")
-
+            self._pd_images = None
+            self._data_locator.modify_current_page("errors")
+            self.zero_selected_image_index()

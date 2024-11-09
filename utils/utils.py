@@ -3,14 +3,9 @@ import inspect
 from typing import Any
 
 import numpy
-import pandas
-import streamlit as st
 from numpy._typing import _64Bit
 from scipy.spatial import ConvexHull
 from shapely import Polygon
-
-from analysis.utils import polygon_to_floatarray
-from stack import results_file, cache_dir
 
 
 # https://gis.stackexchange.com/questions/22895/finding-minimum-area-rectangle-for-given-points/169633#169633
@@ -145,14 +140,27 @@ def create_polygon(_points: list[int | float] | tuple[int | float]) -> Polygon |
 
     return _polygon
 
-def get_ground_truth_positions(_file_name: str) -> list[Polygon]:
-    """
-    Convenience functions for reading ground truth from file.
-    :param _file_name:
-    :return: list of shapely Polygon
-    """
-    with open(_file_name) as csvfile:
-        # _ground_truth_pos = [[int(x) for x in y] for y in csv.reader(csvfile, delimiter='\t')]
-        _ground_truth_pos = [create_polygon([abs(int(float(x))) for x in y]) for y in csv.reader(csvfile)]
+
+def create_polygon_from_list(positions: list[list[str]]) -> Polygon | None:
+    _ground_truth_pos = []
+    for y in positions:
+        foo = []
+        for x in y:
+            if x.replace('.','',1).replace('-','',1).isdigit():
+                foo.append(max(0, int(float(x))))
+        _ground_truth_pos.append(create_polygon(foo))
 
     return _ground_truth_pos
+
+
+def get_ground_truth_positions(_file_name: str) -> list[Polygon]:
+    """
+    Reads data from file and transforms it into polygons that define bounding boxes.
+
+    :param _file_name:
+    :return: list of bounding box polygons
+    """
+    with open(_file_name) as csvfile:
+        points = [y for y in csv.reader(csvfile)]
+
+    return create_polygon_from_list(points)

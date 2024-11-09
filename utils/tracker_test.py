@@ -1,9 +1,7 @@
-import csv
-import os
 import sys
 from datetime import datetime
 from glob import glob
-from typing import Callable, List
+from typing import Callable
 
 import cv2
 import numpy as np
@@ -11,27 +9,6 @@ import numpy.typing
 from shapely.geometry import Polygon
 
 from utils.capture import ImageCapture, VideoCapture
-
-
-def prepare_dirs(_dt_string: str, _tracker_name: str, _dataset_name: List[str]):
-    """
-    Creates directory for errors - frames where tracker failed to track within threshold. If directory already exists
-    it won't be created again.
-
-    :param _dt_string: date string
-    :param _tracker_name:
-    :param _dataset_name:
-    :return: path to errors dir
-    """
-    _raw_index = _dataset_name.index("raw")
-    _errors_dir = f"raw/errors/{_tracker_name}/{_dataset_name[_raw_index + 2]}/{_dataset_name[-1]}/{_dt_string}"
-    try:
-        os.makedirs(_errors_dir)
-    except FileExistsError:
-        # directory already exists
-        pass
-
-    return _errors_dir
 from utils.utils import create_polygon, get_ground_truth_positions
 
 
@@ -128,30 +105,11 @@ def compute_and_display_iou(_ground_truth: Polygon | None, _bbox: tuple[float | 
     return _iou
 
 
-def handle_recording_on_error(_iou, _threshold, _errors_dir, _cap, _frame):
-    """
-    If iou gets below threshold method starts saving frames.
-
-    :param _iou:
-    :param _threshold:
-    :param _errors_dir:
-    :param _cap:
-    :param _frame:
-    :return:
-    """
-    if _iou <= _threshold:
-        cv2.imwrite(
-            f'{_errors_dir}/failure-{int(_cap.get(cv2.CAP_PROP_POS_FRAMES))}.jpg',
-            _frame
-        )
-
-
 def test_tracker(
         _tracker,
         _dataset_dir: str,
         _show_tracking=True,
         _iou_threshold_for_correction=.0,
-        _iou_threshold_for_recording=.0,
         listener: Callable[[int, int], None] = None,
         frame_listener: Callable[[numpy.ndarray], None] = None
 ) -> tuple[str, list[int], list[Polygon|None]]:
@@ -164,7 +122,6 @@ def test_tracker(
     :param _dataset_dir: path to directory with dataset
     :param _show_tracking: shows window with current state of tracker
     :param _iou_threshold_for_correction: threshold when tracker should be reinitialized
-    :param _iou_threshold_for_recording: threshold when frames should be saved to memory
     :param listener: used for progress bar - returns current frame number and number of all frames
     :param frame_listener: returns current frame with tracker bounding box, ground truth box, IoU and few other informations
     :return: date when test was performed, time for detection, trajectories returned by tracker
@@ -175,7 +132,6 @@ def test_tracker(
     cap, frame = init_video_capture(_dataset_dir)
     ground_truth_polygons = get_ground_truth_positions(f'{_dataset_dir}/groundtruth.txt')
     _tracker.init(ground_truth_polygons[0], frame)
-    errors_dir = prepare_dirs(date_string, _tracker.name, _dataset_dir.split('/'))
 
     trajectories: list[Polygon|None] = []
     detection_time: list[int] = []
@@ -216,8 +172,6 @@ def test_tracker(
             cv2.imshow('frame', frame)
         if frame_listener is not None:
             frame_listener(frame)
-
-        handle_recording_on_error(iou, _iou_threshold_for_recording, errors_dir, cap, frame)
 
         if iou <= _iou_threshold_for_correction:
             if ground_truth.area != 0.:

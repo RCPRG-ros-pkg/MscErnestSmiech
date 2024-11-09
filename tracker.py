@@ -45,7 +45,6 @@ class Tracker(ABC):
             dataset_dir: str,
             show_tracking=False,
             iou_threshold_for_correction=.0,
-            iou_threshold_for_recording=.0,
             listener: Callable[[int, int], None] = None,
             frame_listener: Callable[[numpy.ndarray], None] = None
     ) -> tuple[str, list[int], list[Polygon|None]]:
@@ -57,7 +56,6 @@ class Tracker(ABC):
         :param dataset_dir: path to directory with dataset
         :param show_tracking: shows window with current state of tracker
         :param iou_threshold_for_correction: threshold when tracker should be reinitialized
-        :param iou_threshold_for_recording: threshold when frames should be saved to memory
         :param listener: used for progress bar - returns current frame number and number of all frames
         :param frame_listener: returns current frame with tracker bounding box, ground truth box, IoU and few other informations
         :return: date when test was performed, time for detection, trajectories returned by tracker
@@ -67,7 +65,6 @@ class Tracker(ABC):
             dataset_dir,
             show_tracking,
             iou_threshold_for_correction,
-            iou_threshold_for_recording,
             listener,
             frame_listener
         )
