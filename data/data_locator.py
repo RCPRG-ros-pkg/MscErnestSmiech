@@ -3,7 +3,7 @@ import os
 
 import pandas
 
-from analysis.utils import create_polygon
+from utils.utils import create_polygon
 from data.singleton_meta import SingletonMeta
 from stack import cache_dir, results_dir, results_file
 

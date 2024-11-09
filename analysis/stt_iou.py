@@ -3,7 +3,7 @@ import json
 import pandas
 from shapely import Polygon
 
-from analysis.utils import create_polygon
+from utils.utils import create_polygon
 from stack import results_file
 
 

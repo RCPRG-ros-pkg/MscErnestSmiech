@@ -32,6 +32,7 @@ def prepare_dirs(_dt_string: str, _tracker_name: str, _dataset_name: List[str]):
         pass
 
     return _errors_dir
+from utils.utils import create_polygon, get_ground_truth_positions
 
 
 def init_video_capture(_file_name: str):
@@ -49,20 +50,6 @@ def init_video_capture(_file_name: str):
         sys.exit()
 
     return _cap, _frame
-
-
-def get_ground_truth_positions(_file_name: str) -> List[Polygon]: # todo move to util
-    """
-    Reads data from file and transforms it into polygons that define bounding boxes.
-
-    :param _file_name:
-    :return: list of bounding box polygons
-    """
-    with open(_file_name) as csvfile:
-        # _ground_truth_pos = [[int(x) for x in y] for y in csv.reader(csvfile, delimiter='\t')]
-        _ground_truth_pos = [create_polygon([abs(int(float(x))) for x in y]) for y in csv.reader(csvfile)]
-
-    return _ground_truth_pos
 
 
 # todo może support dla polygonów. Zależy czy docelowy tracker będzie miał takie zdolności
@@ -98,43 +85,21 @@ def display_tracker_name_and_fps(_tracker_name, _fps, _timer, _frame):
     cv2.putText(_frame, f"Detection time: {int(_fps)} ms", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (50, 170, 50), 2)
 
 
-def display_ground_truth_box(_ground_truth: Polygon, _frame):
+def display_ground_truth_box(_ground_truth: Polygon | None, _frame):
     """
     Draws bounding box on frame.
 
     :param _ground_truth:
     :param _frame:
     """
+    if _ground_truth is None:
+        return None
     _xx, _yy = _ground_truth.exterior.coords.xy
     _coords = np.array(tuple(zip(_xx, _yy))).astype(int)
     cv2.polylines(_frame, [_coords], False, (0, 255, 0), 3)
 
 
-def create_polygon(_points: List[int | float] | tuple[int | float]) -> Polygon:
-    """
-    Helper function to correctly handle bounding box formats. If there are 4 points then it assumes (x, y, width,
-    height) format. Otherwise, list of (x, y, x, y...)
-
-    :param _points: list of points either in (x, y, width, height) or list of (x, y, x, y...)
-    :return: Polygon defying bounding box
-    """
-    if len(_points) == 4:
-        _x, _y, _width, _height = _points
-        _polygon = Polygon([
-            (_x, _y),
-            (_x + _width, _y),
-            (_x + _width, _y + _height),
-            (_x, _y + _height)
-        ])
-    elif len(_points) >= 6:
-        _polygon = Polygon(zip(_points[::2], _points[1::2]))
-    else:
-        raise Exception("Incorrect number of points")
-
-    return _polygon
-
-
-def compute_and_display_iou(_ground_truth: Polygon, _bbox: tuple[float | int], _ok: bool, _frame) -> float:
+def compute_and_display_iou(_ground_truth: Polygon | None, _bbox: tuple[float | int], _ok: bool, _frame) -> float:
     """
     Returns computed iou and adds it to the frame
 
@@ -144,9 +109,9 @@ def compute_and_display_iou(_ground_truth: Polygon, _bbox: tuple[float | int], _
     :param _frame: cv2 frame
     :return: iou
     """
-    if _ground_truth.area == 0. and all([x == 0. for x in _bbox]):
+    if (_ground_truth is None or _ground_truth.area == 0.) and all([x == 0. for x in _bbox]):
         _iou = 1
-    elif _ground_truth.area == 0. and not all([x == 0. for x in _bbox]):
+    elif (_ground_truth is None or _ground_truth.area == 0.) and not all([x == 0. for x in _bbox]):
         _iou = 0
     else:
         # compute the intersection over union and display it

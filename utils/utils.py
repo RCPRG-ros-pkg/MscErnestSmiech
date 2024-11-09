@@ -9,8 +9,6 @@ from numpy._typing import _64Bit
 from scipy.spatial import ConvexHull
 from shapely import Polygon
 
-from analysis.utils import create_polygon
-
 from analysis.utils import polygon_to_floatarray
 from stack import results_file, cache_dir
 
@@ -85,13 +83,15 @@ def minimum_bounding_rectangle(points) -> numpy.ndarray[Any, numpy.dtype[numpy.f
     return rval
 
 
-def polygon_to_tuple(polygon: Polygon) -> tuple[int, int, int, int] | None:
+def polygon_to_tuple(polygon: Polygon | None) -> tuple[int, int, int, int] | None:
     """
     Changes shapely Polygon into tuple that's representing the corners of the bounding box.
 
     :param polygon:
     :return: (x, y, width, height)
     """
+    if polygon is None:
+        return None
     _xx, _yy = polygon.exterior.coords.xy
     _coords = tuple(zip(_xx, _yy))
     _l = minimum_bounding_rectangle(numpy.array(_coords).astype(int))
@@ -119,6 +119,31 @@ def get_concrete_classes(cls):
         if not inspect.isabstract(subclass):
             yield subclass
 
+
+def create_polygon(_points: list[int | float] | tuple[int | float]) -> Polygon | None:
+    """
+    Creates list of polygons given list of points. If given are 4 points they are treated as (x, y, w, h) otherwise
+    it's treated as list of (x, y) points.
+
+    :param _points: list of points
+    :return: list of polygons
+    """
+    if len(_points) == 4:
+        _x, _y, _width, _height = _points
+        _polygon = Polygon([
+            (_x, _y),
+            (_x + _width, _y),
+            (_x + _width, _y + _height),
+            (_x, _y + _height)
+        ])
+    elif len(_points) >= 6:
+        _polygon = Polygon(zip(_points[::2], _points[1::2]))
+    elif (len(_points) == 1 and _points[0] == 0) or _points == []:
+        _polygon = None
+    else:
+        raise Exception("Incorrect number of points")
+
+    return _polygon
 
 def get_ground_truth_positions(_file_name: str) -> list[Polygon]:
     """

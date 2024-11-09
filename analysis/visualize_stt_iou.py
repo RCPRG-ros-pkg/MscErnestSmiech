@@ -3,7 +3,8 @@ import json
 import pandas
 from Geometry3D import Point, ConvexPolygon, ConvexPolyhedron, Renderer, intersection
 
-from analysis.utils import polygon_to_intarray, create_polygon
+from analysis.utils import polygon_to_intarray
+from utils.utils import create_polygon
 from stack import results_file
 
 
