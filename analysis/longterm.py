@@ -5,7 +5,7 @@ from analysis.accuracy import sequence_accuracy
 from analysis.utils import calculate_overlaps
 
 
-def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
+def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon | None]):
     """
     Counts the number of frames where the tracker is correct, fails, misses, hallucinates or notices an object.
 
@@ -19,7 +19,7 @@ def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
     T, F, M, H, N = 0, 0, 0, 0, 0
 
     for i, (region_tr, region_gt) in enumerate(zip(trajectory, groundtruth)):
-        if region_gt.area == 0:
+        if region_gt is None or region_gt.area == 0:
             if not region_tr:
                 N += 1
             else:
@@ -36,7 +36,7 @@ def count_frames(trajectory: list[Polygon | None], groundtruth: list[Polygon]):
     return T, F, M, H, N
 
 
-def accuracy_robustness(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> [float, float]:
+def accuracy_robustness(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon | None]]) -> [float, float]:
     """
     Longterm multi-object accuracy-robustness measure.
 
@@ -58,7 +58,7 @@ def accuracy_robustness(trajectories: list[list[Polygon | None]], groundtruths: 
     return [robustness / count, accuracy / count]
 
 
-def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> tuple[float, float, float]:
+def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygon | None]) -> tuple[float, float, float]:
     """
     Computes the non-reported error, drift-rate error and absence-detection quality.
 
@@ -79,7 +79,7 @@ def quality_auxiliary(trajectory: list[Polygon | None], groundtruth: list[Polygo
     return not_reported_error, drift_rate_error, absence_detection
 
 
-def average_quality_auxiliary(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> [float, float, float]:
+def average_quality_auxiliary(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon | None]]) -> [float, float, float]:
     """
     Computes the average non-reported error, drift-rate error and absence-detection quality.
 

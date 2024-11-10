@@ -6,7 +6,7 @@ from analysis.utils import calculate_overlaps
 
 def gather_overlaps( # jakość - default, dokładność - custom
         trajectory: list[Polygon | None],
-        groundtruth: list[Polygon],
+        groundtruth: list[Polygon | None],
         ignore_invisible: bool = False,
         threshold: float = -1
 ) -> numpy.ndarray:
@@ -23,7 +23,7 @@ def gather_overlaps( # jakość - default, dokładność - custom
     mask = numpy.ones(len(overlaps), dtype=bool)
 
     for i, (region_tr, region_gt) in enumerate(zip(trajectory, groundtruth)):
-        if ignore_invisible and region_gt.area == 0.0:
+        if ignore_invisible and (region_gt is None or region_gt.area == 0.0):
             mask[i] = False
         elif region_tr is None:
             mask[i] = False
@@ -33,7 +33,7 @@ def gather_overlaps( # jakość - default, dokładność - custom
     return overlaps[mask]
 
 
-def success_plot(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> list[tuple[float, float]]:
+def success_plot(trajectory: list[Polygon | None], groundtruth: list[Polygon | None]) -> list[tuple[float, float]]:
     """
     Success plot analysis. Computes the success plot of the tracker.
 
@@ -56,7 +56,7 @@ def success_plot(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -
     return [(x, y) for x, y in zip(axis_x, axis_y)]
 
 
-def average_success_plot(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> (numpy.ndarray, numpy.ndarray):
+def average_success_plot(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon | None]]) -> (numpy.ndarray, numpy.ndarray):
     """
     Average success plot analysis. Computes the average success plot of the tracker.
 
@@ -79,7 +79,7 @@ def average_success_plot(trajectories: list[list[Polygon | None]], groundtruths:
     return axis_x, axis_y
 
 
-def sequence_accuracy(trajectory: list[Polygon | None], groundtruth: list[Polygon], ignore_invisible: bool = False, threshold: float = -1) -> float:
+def sequence_accuracy(trajectory: list[Polygon | None], groundtruth: list[Polygon | None], ignore_invisible: bool = False, threshold: float = -1) -> float:
     """
     Sequence accuracy analysis. Computes average overlap between predicted and groundtruth regions.
 
@@ -98,7 +98,7 @@ def sequence_accuracy(trajectory: list[Polygon | None], groundtruth: list[Polygo
     return cummulative
 
 
-def average_accuracy(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon]]) -> float:
+def average_accuracy(trajectories: list[list[Polygon | None]], groundtruths: list[list[Polygon | None]]) -> float:
     """
     Average accuracy analysis. Computes average overlap between predicted and groundtruth regions.
 

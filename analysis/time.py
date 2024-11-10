@@ -1,3 +1,5 @@
+import math
+
 import numpy
 from shapely import Polygon
 
@@ -7,13 +9,14 @@ from analysis.utils import calculate_overlaps
 def gather_time_in_overlaps(
         times: list[int],
         trajectory: list[Polygon | None],
-        groundtruth: list[Polygon],
+        groundtruth: list[Polygon | None],
         ignore_invisible: bool = False,
         threshold: float = -1
 ) -> numpy.ndarray:
     """
     Gather time in overlaping regions.
 
+    :param times: list of times
     :param trajectory: List of regions predicted by the tracker.
     :param groundtruth: List of groundtruth regions.
     :param ignore_invisible: Ignore invisible regions in the groundtruth.
@@ -26,7 +29,7 @@ def gather_time_in_overlaps(
 
     for i, (region_tr, region_gt) in enumerate(zip(trajectory, groundtruth)):
         # Skip if groundtruth is unknown
-        if ignore_invisible and region_gt.area == 0.0:
+        if ignore_invisible and (region_gt is None or region_gt.area == 0.0):
             mask[i] = False
         # Skip if predicted is initialization frame
         elif region_tr is None:
@@ -40,7 +43,7 @@ def gather_time_in_overlaps(
 def sequence_time(
         times: list[int],
         trajectory: list[Polygon | None],
-        groundtruth: list[Polygon],
+        groundtruth: list[Polygon | None],
         ignore_invisible: bool = False,
         threshold: float = -1
 ) -> float:
@@ -66,7 +69,7 @@ def sequence_time(
 def average_time(
         times: list[list[int]],
         trajectories: list[list[Polygon | None]],
-        groundtruths: list[list[Polygon]]
+        groundtruths: list[list[Polygon | None]]
 ) -> float:
     """
     Gather average times from all sequences.
@@ -89,11 +92,12 @@ def average_time(
 def count_time_frames(
         times: list[int],
         trajectory: list[Polygon | None],
-        groundtruth: list[Polygon]
+        groundtruth: list[Polygon | None]
 ) -> tuple[[], [], [], [], []]:
     """
     gathers times when the tracker is correct, fails, misses, hallucinates or notices an object.
 
+    :param times: list of times
     :param trajectory: Trajectory of the tracker.
     :param groundtruth: Groundtruth trajectory.
     :return: Times when the tracker is correct, fails, misses, hallucinates or notices an object.
@@ -104,7 +108,7 @@ def count_time_frames(
     T, F, M, H, N = [], [], [], [], []
 
     for i, (time, region_tr, region_gt) in enumerate(zip(times, trajectory, groundtruth)):
-        if region_gt.area == 0:
+        if region_gt is None or region_gt.area == 0:
             if not region_tr:
                 N.append(time)
             else:
@@ -124,11 +128,12 @@ def count_time_frames(
 def time_quality_auxiliary(
         times: list[int],
         trajectory: list[Polygon | None],
-        groundtruth: list[Polygon]
+        groundtruth: list[Polygon | None]
 ) -> tuple[int, int, int, int]:
     """
     Computes the times spent in robustness, non-reported error, drift-rate error and absence-detection quality.
 
+    :param times: list of times of sequences.
     :param trajectory: Trajectory of the tracker.
     :param groundtruth: Groundtruth trajectory.
     :return: tuple of times of (robustness, nre, dre, ad)
@@ -159,11 +164,12 @@ def time_quality_auxiliary(
 def average_time_quality_auxiliary(
         times: list[list[int]],
         trajectories: list[list[Polygon | None]],
-        groundtruths: list[list[Polygon]]
+        groundtruths: list[list[Polygon | None]]
 ) -> [float, float, float, float]:
     """
     Computes the average times spent in robustness, non-reported error, drift-rate error and absence-detection quality.
 
+    :param times: list of times of sequences.
     :param trajectories: list of sequences of regions predicted by the tracker.
     :param groundtruths: list of sequences of groundtruth regions.
     :return: tuple of average times of (robustness, nre, dre, ad)
@@ -180,7 +186,7 @@ def average_time_quality_auxiliary(
         not_reported_error += nre
         drift_rate_error += dre
         robustness += r
-        if ad is not None:
+        if ad is not None and not math.isnan(ad):
             absence_count += 1
             absence_detection += ad
 

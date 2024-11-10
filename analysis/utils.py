@@ -26,7 +26,7 @@ def calculate_overlap(first: Polygon | None, second: Polygon | None) -> float:
     return intersect / union
 
 
-def calculate_overlaps(trajectory: list[Polygon | None], groundtruth: list[Polygon]) -> list[float | None]:
+def calculate_overlaps(trajectory: list[Polygon | None], groundtruth: list[Polygon | None]) -> list[float | None]:
     """
     Calculate the overlap between two lists of regions.
 
