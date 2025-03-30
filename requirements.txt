@@ -6,4 +6,4 @@ pandas==2.2.3
 scipy==1.14.1
 Shapely==2.0.6
 streamlit==1.27.2
-pip install vot-toolkit==0.7.1
+vot-toolkit==0.7.1
