@@ -149,7 +149,11 @@ def test_tracker(
             ok, bbox = _tracker.eval(frame)
             trajectories.append(create_polygon(bbox) if ok else None)
         except cv2.error:
-            break
+            print(repr(e))
+            total = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+            print(f"cv2.error in dataset {_dataset_dir} in frame {total - cap.get(cv2.CAP_PROP_POS_FRAMES)} out of {total}")
+            trajectories.append(None)
+            continue
 
         # Calculate detection time in milliseconds
         _detection_time = (cv2.getTickCount() - timer) / cv2.getTickFrequency() * 1000
