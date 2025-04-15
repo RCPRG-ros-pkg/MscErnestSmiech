@@ -42,4 +42,4 @@ a następnie umieścić w główym katalogu.
 Aby użyć modelu należy ściągnąć pliki:
 - https://github.com/opencv/opencv_zoo/raw/refs/heads/main/models/object_tracking_vittrack/object_tracking_vittrack_2023sep.onnx
 
-a następnie umieścić w główym katalogu.
+a następnie zmień nazwę pliku na vitTracker.onnx oraz umieścić w główym katalogu.
