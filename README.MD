@@ -28,3 +28,11 @@ Aby użyć modelu należy ściągnąć pliki:
 - https://www.dropbox.com/s/qvmtszx5h339a0w/dasiamrpn_kernel_cls1.onnx?dl=0
 
 a następnie umieścić w główym katalogu.
+
+## NanoTrack
+
+Aby użyć modelu należy ściągnąć pliki:
+- https://github.com/HonglinChu/SiamTrackers/raw/refs/heads/master/NanoTrack/models/nanotrackv3/nanotrack_backbone.onnx
+- https://github.com/HonglinChu/SiamTrackers/raw/refs/heads/master/NanoTrack/models/nanotrackv3/nanotrack_head.onnx
+
+a następnie umieścić w główym katalogu.
