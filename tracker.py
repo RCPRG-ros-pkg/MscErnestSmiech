@@ -174,6 +174,17 @@ class TrackerDaSiamRPN(TrackerCV2):
         return cv2.TrackerDaSiamRPN().create()
 
 
+class TrackerNanoTrack(TrackerCV2):
+
+    @property
+    def name(self) -> str:
+        return "NanoTrack"
+
+    @property
+    def tracker(self) -> cv2.Tracker:
+        return cv2.TrackerNano().create()
+
+
 class TrackerMOSSE(TrackerCV2):
 
     @property
