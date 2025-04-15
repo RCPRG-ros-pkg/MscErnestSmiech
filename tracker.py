@@ -185,6 +185,17 @@ class TrackerNanoTrack(TrackerCV2):
         return cv2.TrackerNano().create()
 
 
+class TrackerViT(TrackerCV2):
+
+    @property
+    def name(self) -> str:
+        return "ViT"
+
+    @property
+    def tracker(self) -> cv2.Tracker:
+        return cv2.TrackerVit().create()
+
+
 class TrackerMOSSE(TrackerCV2):
 
     @property
