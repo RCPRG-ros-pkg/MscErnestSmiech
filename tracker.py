@@ -163,6 +163,17 @@ class TrackerGOTURN(TrackerCV2):
         return cv2.TrackerGOTURN().create()
 
 
+class TrackerDaSiamRPN(TrackerCV2):
+
+    @property
+    def name(self) -> str:
+        return "DaSiamRPN"
+
+    @property
+    def tracker(self) -> cv2.Tracker:
+        return cv2.TrackerDaSiamRPN().create()
+
+
 class TrackerMOSSE(TrackerCV2):
 
     @property
