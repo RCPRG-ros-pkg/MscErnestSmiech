@@ -32,10 +32,14 @@ a następnie umieścić w główym katalogu.
 ## NanoTrack
 
 Aby użyć modelu należy ściągnąć pliki:
-- https://github.com/HonglinChu/SiamTrackers/raw/refs/heads/master/NanoTrack/models/nanotrackv3/nanotrack_backbone.onnx
-- https://github.com/HonglinChu/SiamTrackers/raw/refs/heads/master/NanoTrack/models/nanotrackv3/nanotrack_head.onnx
+- https://github.com/HonglinChu/SiamTrackers/raw/refs/heads/master/NanoTrack/models/nanotrackv2/nanotrack_backbone_sim.onnx
+- https://github.com/HonglinChu/SiamTrackers/raw/refs/heads/master/NanoTrack/models/nanotrackv2/nanotrack_head_sim.onnx
 
-a następnie umieścić w główym katalogu.
+następnie zmień nazwy na:
+- backbone.onnx
+- neckhead.onnx
+
+oraz umieścić w główym katalogu.
 
 ## ViT
 

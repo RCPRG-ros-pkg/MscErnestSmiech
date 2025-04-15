@@ -195,7 +195,7 @@ class TrackerViT(TrackerCV2):
     def tracker(self) -> cv2.Tracker:
         return cv2.TrackerVit().create()
 
-
+      
 class TrackerMOSSE(TrackerCV2):
 
     @property
