@@ -40,3 +40,10 @@ następnie zmień nazwy na:
 - neckhead.onnx
 
 oraz umieścić w główym katalogu.
+
+## ViT
+
+Aby użyć modelu należy ściągnąć pliki:
+- https://github.com/opencv/opencv_zoo/raw/refs/heads/main/models/object_tracking_vittrack/object_tracking_vittrack_2023sep.onnx
+
+a następnie zmień nazwę pliku na vitTracker.onnx oraz umieścić w główym katalogu.
