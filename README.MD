@@ -36,3 +36,10 @@ Aby użyć modelu należy ściągnąć pliki:
 - https://github.com/HonglinChu/SiamTrackers/raw/refs/heads/master/NanoTrack/models/nanotrackv3/nanotrack_head.onnx
 
 a następnie umieścić w główym katalogu.
+
+## ViT
+
+Aby użyć modelu należy ściągnąć pliki:
+- https://github.com/opencv/opencv_zoo/raw/refs/heads/main/models/object_tracking_vittrack/object_tracking_vittrack_2023sep.onnx
+
+a następnie umieścić w główym katalogu.
