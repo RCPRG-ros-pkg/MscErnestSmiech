@@ -4,6 +4,7 @@
 pip install -r requirements.txt
 vot initialize tests/basic --workspace ./raw/tests/basic
 vot initialize vot2022/shorttermbox --workspace ./raw/tests/vot2022stb
+vot initialize vot2022/longterm --workspace ./raw/tests/vot2022lt
 streamlit run home.py
 ```
 
