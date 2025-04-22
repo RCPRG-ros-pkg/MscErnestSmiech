@@ -32,8 +32,10 @@ class TestsPage:
         st.subheader("IoU")
         self.draw_iou_scores()
         self.draw_iou_table()
+        self.draw_charts(self.view_model.get_iou_table(), ['STT-IOU', 'Quality', 'Accuracy'], 'iou')
         st.subheader("Time")
         self.draw_time_table()
+        self.draw_charts(self.view_model.get_time_table(), ['Quality', 'Robustness', 'NRE', 'DRE', 'AD'], 'time')
 
     def sidebar(self) -> None:
         """
@@ -141,6 +143,24 @@ class TestsPage:
                 column_order=["Tracker", "Dataset", "Quality", "Accuracy", "Robustness", 'NRE', 'DRE', 'AD'],
                 hide_index=True
             )
+
+    def draw_charts(self, df, metrics, key):
+        """
+        Draws bar charts for metrics. It allows selecting trackers, datasets and metrics that should be shown.
+        """
+        options = ['Tracker', 'Dataset']
+        show_type = st.radio("Show", options, horizontal=True, key=f'radio{key}')
+        options.remove(show_type)
+
+        types = df[show_type].unique()
+        selected_types = st.multiselect(f"{show_type}s", types, types, key=f'multiselect{key}')
+
+        for _type in selected_types:
+            st.text(_type)
+            selected_metrics = st.multiselect("Metrics", metrics, metrics, key=f"{key}{_type}1")
+            possible_options = df[df[show_type] == _type][options[0]].unique()
+            selected_options = st.multiselect(f"{options[0]}s", possible_options, possible_options, key=f"{key}{_type}2")
+            st.bar_chart(df[(df[show_type] == _type) & (df[options[0]].isin(selected_options))], x=options[0], color=options[0], y=selected_metrics, stack=False)
 
     def handle_all_examples_bar(self, index: int, sequences: [str]):
         if self.all_examples_bar is not None:
