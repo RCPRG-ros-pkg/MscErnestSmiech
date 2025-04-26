@@ -180,7 +180,7 @@ def test_tracker(
             frame_listener(frame)
 
         if iou <= _iou_threshold_for_correction:
-            if ground_truth.area != 0.:
+            if ground_truth is not None and ground_truth.area != 0.:
                 _tracker.init(ground_truth, frame)
 
         # Exit the loop if the 'q' key is pressed
