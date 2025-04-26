@@ -85,7 +85,7 @@ class ErrorsViewModel(metaclass=SingletonMeta):
         indexes = numpy.argwhere(overlaps == 0).flatten()
 
         selected_dataset, selected_sequence = selected_rows.head(1)[['dataset', 'sequence']].astype(str).values.flatten().tolist()
-        pictures = numpy.array(glob.glob(f"{tests_dir}/{datasets[selected_dataset]}/sequences/{selected_sequence}/*.jpg"))
+        pictures = numpy.array(glob.glob(f"{tests_dir}/{datasets[selected_dataset]}/sequences/{selected_sequence}/color/*.jpg"))
         pictures.sort()
 
         _pd = pandas.DataFrame(
